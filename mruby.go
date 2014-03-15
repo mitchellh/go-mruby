@@ -90,5 +90,9 @@ func (m *Mrb) LoadString(code string) (*Value, error) {
 // Close a Mrb, this must be called to properly free resources, and
 // should only be called once.
 func (m *Mrb) Close() {
+	// Delete all the methods from the state
+	delete(stateMethodTable, m.state)
+
+	// Close the state
 	C.mrb_close(m.state)
 }
