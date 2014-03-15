@@ -9,12 +9,23 @@ func TestNewMrb(t *testing.T) {
 	mrb.Close()
 }
 
+func TestMrbArena(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	idx := mrb.ArenaSave();
+	mrb.ArenaRestore(idx);
+}
+
 func TestMrbLoadString(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
 
-	value := mrb.LoadString("p 'HELLO'")
-	if value.IsExc() {
-		t.Fatalf("err: %s", value)
+	value, err := mrb.LoadString(`"HELLO"`)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if value == nil {
+		t.Fatalf("should have value")
 	}
 }

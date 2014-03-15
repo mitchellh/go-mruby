@@ -9,52 +9,42 @@ import "C"
 
 // Value represents an mrb_value.
 type Value struct {
-	isExc bool
-	s     *mrbState
 	value C.mrb_value
-}
-
-// Close garbage collects a value. This must be called when a Value
-// is done being used.
-func (v *Value) Close() {
-	// TODO: GC value?
-	// C.mrb_free(v.s.state, C._go_mrb_ptr(v.value))
-	v.s.Close()
-}
-
-// IsExc returns true if the value was raised as an exception.
-func (v *Value) IsExc() bool {
-	return v.isExc
+	state *C.mrb_state
 }
 
 // String returns the "to_s" result of this value.
 func (v *Value) String() string {
-	value := C.mrb_any_to_s(v.s.state, v.value)
-	result := C.GoString(C.mrb_string_value_ptr(v.s.state, value))
-	// TODO: GC value?
+	value := C.mrb_any_to_s(v.state, v.value)
+	result := C.GoString(C.mrb_string_value_ptr(v.state, value))
 	return result
 }
 
-func newExceptionValue(s *mrbState) *Value {
-	if s.state.exc == nil {
+func newExceptionValue(s *C.mrb_state) *Exception {
+	if s.exc == nil {
 		panic("exception value init without exception")
 	}
 
 	// Convert the RObject* to an mrb_value
-	value := C.mrb_obj_value(unsafe.Pointer(s.state.exc))
+	value := C.mrb_obj_value(unsafe.Pointer(s.exc))
 
 	result := newValue(s, value)
-	result.isExc = true
-	return result
+	return &Exception{Value: result}
 }
 
-func newValue(s *mrbState, v C.mrb_value) *Value {
-	// Increase the ref count on our state
-	s.Open()
-
+func newValue(s *C.mrb_state, v C.mrb_value) *Value {
 	return &Value{
-		isExc: false,
-		s:     s,
+		state: s,
 		value: v,
 	}
+}
+
+// Exception is a special type of value that represents an error
+// and implements the Error interface.
+type Exception struct {
+	*Value
+}
+
+func (e *Exception) Error() string {
+	return e.String()
 }
