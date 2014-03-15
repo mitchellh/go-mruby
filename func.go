@@ -25,7 +25,7 @@ func init() {
 }
 
 //export go_mrb_func_call
-func go_mrb_func_call(s *C.mrb_state, v C.mrb_value) C.mrb_value {
+func go_mrb_func_call(s *C.mrb_state, v *C.mrb_value) C.mrb_value {
 	// Lookup the classes that we've registered methods for in this state
 	classTable := stateMethodTable[s]
 	if classTable == nil {
@@ -49,8 +49,7 @@ func go_mrb_func_call(s *C.mrb_state, v C.mrb_value) C.mrb_value {
 
 	// Call the method to get our *Value
 	// TODO(mitchellh): reuse the Mrb instead of allocating every time
-	value := f(&Mrb{s}, newValue(s, v))
-	fmt.Printf("WHAT: %d\n", value.Type())
+	value := f(&Mrb{s}, newValue(s, *v))
 	return value.value
 }
 

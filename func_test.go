@@ -1,14 +1,11 @@
 package mruby
 
 import (
-	"fmt"
 	"testing"
 )
 
 func testCallback(m *Mrb, self *Value) *Value {
-	v := m.FixnumValue(42)
-	fmt.Printf("TYPE: %d\n", v.Type())
-	return v
+	return m.FixnumValue(42)
 }
 
 func testCallbackResult(t *testing.T, v *Value) {

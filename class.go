@@ -19,7 +19,7 @@ func (c *Class) DefineClassMethod(name string, cb Func) {
 		c.mrb.state,
 		c.class,
 		C.CString(name),
-		C._go_mrb_func_call(),
+		C._go_mrb_func_t(),
 		C._go_MRB_ARGS_ANY())
 }
 
