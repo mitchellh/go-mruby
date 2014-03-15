@@ -9,7 +9,7 @@ func TestClassDefineClassMethod(t *testing.T) {
 	defer mrb.Close()
 
 	class := mrb.DefineClass("Hello", mrb.ObjectClass())
-	class.DefineClassMethod("foo", testCallback)
+	class.DefineClassMethod("foo", testCallback, ArgsNone())
 	value, err := mrb.LoadString("Hello.foo")
 	if err != nil {
 		t.Fatalf("err: %s", err)
@@ -23,7 +23,7 @@ func TestClassDefineMethod(t *testing.T) {
 	defer mrb.Close()
 
 	class := mrb.DefineClass("Hello", mrb.ObjectClass())
-	class.DefineMethod("foo", testCallback)
+	class.DefineMethod("foo", testCallback, ArgsNone())
 	value, err := mrb.LoadString("Hello.new.foo")
 	if err != nil {
 		t.Fatalf("err: %s", err)

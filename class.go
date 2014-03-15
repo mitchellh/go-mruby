@@ -12,7 +12,7 @@ type Class struct {
 	mrb     *Mrb
 }
 
-func (c *Class) DefineClassMethod(name string, cb Func) {
+func (c *Class) DefineClassMethod(name string, cb Func, as ArgSpec) {
 	insertMethod(c.mrb.state, c.class.c, name, cb)
 
 	C.mrb_define_class_method(
@@ -20,10 +20,10 @@ func (c *Class) DefineClassMethod(name string, cb Func) {
 		c.class,
 		C.CString(name),
 		C._go_mrb_func_t(),
-		C._go_MRB_ARGS_ANY())
+		C.mrb_aspec(as))
 }
 
-func (c *Class) DefineMethod(name string, cb Func) {
+func (c *Class) DefineMethod(name string, cb Func, as ArgSpec) {
 	insertMethod(c.mrb.state, c.class, name, cb)
 
 	C.mrb_define_method(
@@ -31,7 +31,7 @@ func (c *Class) DefineMethod(name string, cb Func) {
 		c.class,
 		C.CString(name),
 		C._go_mrb_func_t(),
-		C._go_MRB_ARGS_ANY())
+		C.mrb_aspec(as))
 }
 
 func newClass(mrb *Mrb, c *C.struct_RClass) *Class {

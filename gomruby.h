@@ -37,6 +37,26 @@ static inline mrb_aspec _go_MRB_ARGS_ANY() {
     return MRB_ARGS_ANY();
 }
 
+static inline mrb_aspec _go_MRB_ARGS_ARG(int r, int o) {
+    return MRB_ARGS_ARG(r, o);
+}
+
+static inline mrb_aspec _go_MRB_ARGS_BLOCK() {
+    return MRB_ARGS_BLOCK();
+}
+
+static inline mrb_aspec _go_MRB_ARGS_NONE() {
+    return MRB_ARGS_NONE();
+}
+
+static inline mrb_aspec _go_MRB_ARGS_OPT(int n) {
+    return MRB_ARGS_OPT(n);
+}
+
+static inline mrb_aspec _go_MRB_ARGS_REQ(int n) {
+    return MRB_ARGS_REQ(n);
+}
+
 static inline int _go_mrb_fixnum(mrb_value o) {
     return mrb_fixnum(o);
 }
