@@ -1,7 +1,10 @@
 MRUBY_COMMIT ?= HEAD
 
 all: libmruby.a
-	echo foo
+	go build
+
+test: libmruby.a
+	go test
 
 clean:
 	rm -rf vendor
@@ -17,4 +20,4 @@ vendor/mruby:
 	cd vendor/mruby && git reset --hard && git clean -fdx
 	cd vendor/mruby && git checkout ${MRUBY_COMMIT}
 
-.PHONY: all clean libmruby.a
+.PHONY: all clean libmruby.a test
