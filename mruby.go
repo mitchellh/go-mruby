@@ -5,16 +5,13 @@ package mruby
 // #include "gomruby.h"
 import "C"
 
-import (
-)
-
 // Mrb represents a single instance of mruby.
 type Mrb struct {
 	state *C.mrb_state
 }
 
+// ArenaIndex represents the index into the arena portion of the GC.
 type ArenaIndex int
-type Class *C.struct_RClass
 
 func NewMrb() *Mrb {
 	state := C.mrb_open()
@@ -49,16 +46,32 @@ func (m *Mrb) ArenaSave() ArenaIndex {
 	return ArenaIndex(C.mrb_gc_arena_save(m.state))
 }
 
-func (m *Mrb) ObjectClass() Class {
-	return Class(m.state.object_class)
+// Returns the Object top-level class.
+func (m *Mrb) ObjectClass() *Class {
+	return newClass(m, m.state.object_class)
 }
 
-func (m *Mrb) DefineClass(name string, super Class) Class {
+// Define a new top-level class.
+func (m *Mrb) DefineClass(name string, super *Class) *Class {
 	if super == nil {
 		panic("WHAT")
 	}
 
-	return Class(C.mrb_define_class(m.state, C.CString(name), super))
+	return newClass(
+		m, C.mrb_define_class(m.state, C.CString(name), super.class))
+}
+
+func (m *Mrb) FalseValue() *Value {
+	return newValue(m.state, C.mrb_false_value())
+}
+
+func (m *Mrb) TrueValue() *Value {
+	return newValue(m.state, C.mrb_true_value())
+}
+
+// Returns a Value for a fixed number.
+func (m *Mrb) FixnumValue(v int) *Value {
+	return newValue(m.state, C.mrb_fixnum_value(C.mrb_int(v)))
 }
 
 // LoadString loads the given code, executes it, and returns its final

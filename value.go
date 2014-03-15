@@ -13,11 +13,46 @@ type Value struct {
 	state *C.mrb_state
 }
 
+// ValueType is an enum of types that a Value can be and is returned by
+// Value.Type().
+type ValueType uint32
+
+const (
+	TypeFalse ValueType = iota
+	TypeFree
+	TypeTrue
+	TypeFixnum
+	TypeSymbol
+	TypeUndef
+	TypeFloat
+	TypeCptr
+	TypeObject
+	TypeClass
+	TypeModule
+	TypeIClass
+	TypeSClass
+	TypeProc
+	TypeArray
+	TypeHash
+	TypeString
+	TypeRange
+	TypeException
+	TypeFile
+	TypeEnv
+	TypeData
+	TypeFiber
+	TypeMaxDefine
+)
+
 // String returns the "to_s" result of this value.
 func (v *Value) String() string {
 	value := C.mrb_any_to_s(v.state, v.value)
 	result := C.GoString(C.mrb_string_value_ptr(v.state, value))
 	return result
+}
+
+func (v *Value) Type() ValueType {
+	return ValueType(C._go_mrb_type(v.value))
 }
 
 func newExceptionValue(s *C.mrb_state) *Exception {

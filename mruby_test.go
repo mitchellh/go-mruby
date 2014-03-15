@@ -17,6 +17,17 @@ func TestMrbArena(t *testing.T) {
 	mrb.ArenaRestore(idx);
 }
 
+func TestMrbDefineClass(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	mrb.DefineClass("Hello", mrb.ObjectClass())
+	_, err := mrb.LoadString("Hello")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
 func TestMrbLoadString(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
