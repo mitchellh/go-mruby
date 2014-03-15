@@ -11,6 +11,9 @@
 #include <mruby/string.h>
 #include <mruby/value.h>
 
+//-------------------------------------------------------------------
+// Helpers to deal with calling back into Go.
+//-------------------------------------------------------------------
 // This is declard in func.go and is a way for us to call back into
 // Go to execute a method.
 extern mrb_value go_mrb_func_call(mrb_state*, mrb_value*);
@@ -26,6 +29,17 @@ static inline mrb_value _go_mrb_func_call(mrb_state *s, mrb_value self) {
 // just calls back into Go.
 static inline mrb_func_t _go_mrb_func_t() {
     return &_go_mrb_func_call;
+}
+
+//-------------------------------------------------------------------
+// Helpers to deal with getting arguments
+//-------------------------------------------------------------------
+
+// Our implementation of mrb_get_args which only returns mrb_values.
+static inline mrb_value _go_mrb_get_arg_value(mrb_state *s, const char *format) {
+    mrb_value v;
+    mrb_get_args(s, format, &v);
+    return v;
 }
 
 //-------------------------------------------------------------------

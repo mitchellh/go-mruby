@@ -44,6 +44,22 @@ const (
 	TypeMaxDefine
 )
 
+// Call calls a method with the given name and arguments on this
+// value.
+func (v *Value) Call(method string, args ...*Value) (*Value, error) {
+	result := C.mrb_funcall_argv(
+		v.state,
+		v.value,
+		C.mrb_intern_cstr(v.state, C.CString(method)),
+		0,
+		nil)
+	if v.state.exc != nil {
+		return nil, newExceptionValue(v.state)
+	}
+
+	return newValue(v.state, result), nil
+}
+
 // Fixnum returns the numeric value of this object if the Type() is
 // TypeFixnum. Calling this with any other type will result in undefined
 // behavior.
@@ -53,7 +69,7 @@ func (v *Value) Fixnum() int {
 
 // String returns the "to_s" result of this value.
 func (v *Value) String() string {
-	value := C.mrb_any_to_s(v.state, v.value)
+	value := C.mrb_obj_as_string(v.state, v.value)
 	result := C.GoString(C.mrb_string_value_ptr(v.state, value))
 	return result
 }
