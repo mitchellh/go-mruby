@@ -4,7 +4,7 @@ all: libmruby.a
 	go build
 
 test: libmruby.a
-	go test
+	go test -v
 
 clean:
 	rm -rf vendor
