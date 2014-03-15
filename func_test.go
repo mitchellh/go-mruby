@@ -12,4 +12,8 @@ func testCallbackResult(t *testing.T, v *Value) {
 	if v.Type() != TypeFixnum {
 		t.Fatalf("bad type: %d", v.Type())
 	}
+
+	if v.Fixnum() != 42 {
+		t.Fatalf("bad: %d", v.Fixnum())
+	}
 }

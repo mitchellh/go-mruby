@@ -44,6 +44,13 @@ const (
 	TypeMaxDefine
 )
 
+// Fixnum returns the numeric value of this object if the Type() is
+// TypeFixnum. Calling this with any other type will result in undefined
+// behavior.
+func (v *Value) Fixnum() int {
+	return int(C._go_mrb_fixnum(v.value))
+}
+
 // String returns the "to_s" result of this value.
 func (v *Value) String() string {
 	value := C.mrb_any_to_s(v.state, v.value)

@@ -37,6 +37,10 @@ static inline mrb_aspec _go_MRB_ARGS_ANY() {
     return MRB_ARGS_ANY();
 }
 
+static inline int _go_mrb_fixnum(mrb_value o) {
+    return mrb_fixnum(o);
+}
+
 static inline enum mrb_vtype _go_mrb_type(mrb_value o) {
     return mrb_type(o);
 }
