@@ -61,10 +61,12 @@ func (m *Mrb) DefineClass(name string, super *Class) *Class {
 		m, C.mrb_define_class(m.state, C.CString(name), super.class))
 }
 
+// Returns a Value for "false"
 func (m *Mrb) FalseValue() *Value {
 	return newValue(m.state, C.mrb_false_value())
 }
 
+// Returns a Value for "true"
 func (m *Mrb) TrueValue() *Value {
 	return newValue(m.state, C.mrb_true_value())
 }
