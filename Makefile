@@ -1,4 +1,4 @@
-MRUBY_COMMIT ?= HEAD
+MRUBY_COMMIT ?= 1.0.0
 
 all: libmruby.a
 	go test
