@@ -93,6 +93,43 @@ func TestMrbDefineClassUnder(t *testing.T) {
 	}
 }
 
+func TestMrbDefineModule(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	mrb.DefineModule("Hello")
+	_, err := mrb.LoadString("Hello")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
+func TestMrbDefineModuleUnder(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	// Define an outer
+	hello := mrb.DefineModule("Hello")
+	_, err := mrb.LoadString("Hello")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Inner
+	mrb.DefineModuleUnder("World", hello)
+	_, err = mrb.LoadString("Hello::World")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Inner defaults
+	mrb.DefineModuleUnder("Another", nil)
+	_, err = mrb.LoadString("Another")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
 func TestMrbGetArgs(t *testing.T) {
 	cases := []struct {
 		args   string

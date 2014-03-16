@@ -76,6 +76,21 @@ func (m *Mrb) DefineClassUnder(name string, super *Class, outer *Class) *Class {
 		m.state, outer.class, C.CString(name), super.class))
 }
 
+// DefineModule defines a top-level module.
+func (m *Mrb) DefineModule(name string) *Class {
+	return newClass(m, C.mrb_define_module(m.state, C.CString(name)))
+}
+
+// DefineModuleUnder defines a module under another class/module.
+func (m *Mrb) DefineModuleUnder(name string, outer *Class) *Class {
+	if outer == nil {
+		outer = m.ObjectClass()
+	}
+
+	return newClass(m,
+		C.mrb_define_module_under(m.state, outer.class, C.CString(name)))
+}
+
 // Class returns the class with the given name and superclass. Note that
 // if you call this with a class that doesn't exist, mruby will abort the
 // application (like a panic, but not a Go panic).
