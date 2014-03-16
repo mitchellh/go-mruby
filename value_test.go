@@ -4,6 +4,24 @@ import (
 	"testing"
 )
 
+func TestMrbValueCall(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	value, err := mrb.LoadString(`"foo"`)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	result, err := value.Call("==", String("foo"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if result.Type() != TypeTrue {
+		t.Fatalf("bad type")
+	}
+}
+
 func TestMrbValueValue(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()

@@ -57,13 +57,26 @@ const (
 
 // Call calls a method with the given name and arguments on this
 // value.
-func (v *MrbValue) Call(method string, args ...*MrbValue) (*MrbValue, error) {
+func (v *MrbValue) Call(method string, args ...Value) (*MrbValue, error) {
+	var argv []C.mrb_value = nil
+	var argvPtr *C.mrb_value = nil
+
+	if len(args) > 0 {
+		// Make the raw byte slice to hold our arguments we'll pass to C
+		argv = make([]C.mrb_value, len(args))
+		for i, arg := range args {
+			argv[i] = arg.MrbValue(&Mrb{v.state}).value
+		}
+
+		argvPtr = &argv[0]
+	}
+
 	result := C.mrb_funcall_argv(
 		v.state,
 		v.value,
 		C.mrb_intern_cstr(v.state, C.CString(method)),
-		0,
-		nil)
+		C.int(len(argv)),
+		argvPtr)
 	if v.state.exc != nil {
 		return nil, newExceptionValue(v.state)
 	}
