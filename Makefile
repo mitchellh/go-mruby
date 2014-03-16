@@ -1,10 +1,7 @@
 MRUBY_COMMIT ?= HEAD
 
 all: libmruby.a
-	go build
-
-test: libmruby.a
-	go test -v
+	go test
 
 clean:
 	rm -rf vendor
