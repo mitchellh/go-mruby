@@ -31,3 +31,14 @@ func TestClassDefineMethod(t *testing.T) {
 
 	testCallbackResult(t, value)
 }
+
+func TestClassValue(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	class := mrb.DefineClass("Hello", mrb.ObjectClass())
+	value := class.Value()
+	if value.Type() != TypeClass {
+		t.Fatalf("bad: %d", value.Type())
+	}
+}

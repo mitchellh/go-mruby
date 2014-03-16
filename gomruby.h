@@ -13,6 +13,7 @@
 #include <mruby/proc.h>
 #include <mruby/string.h>
 #include <mruby/value.h>
+#include <mruby/variable.h>
 
 //-------------------------------------------------------------------
 // Helpers to deal with calling back into Go.

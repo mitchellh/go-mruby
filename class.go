@@ -1,5 +1,7 @@
 package mruby
 
+import "unsafe"
+
 // #include "gomruby.h"
 import "C"
 
@@ -32,6 +34,12 @@ func (c *Class) DefineMethod(name string, cb Func, as ArgSpec) {
 		C.CString(name),
 		C._go_mrb_func_t(),
 		C.mrb_aspec(as))
+}
+
+// Value returns a *Value for this Class. *Values are sometimes required
+// as arguments where classes should be valid.
+func (c *Class) Value() *Value {
+	return newValue(c.mrb.state, C.mrb_obj_value(unsafe.Pointer(c.class)))
 }
 
 func newClass(mrb *Mrb, c *C.struct_RClass) *Class {

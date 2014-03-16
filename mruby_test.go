@@ -19,6 +19,37 @@ func TestMrbArena(t *testing.T) {
 	mrb.ArenaRestore(idx)
 }
 
+func TestMrbClass(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	var class *Class
+	class = mrb.Class("Object", nil)
+	if class == nil {
+		t.Fatal("class should not be nil")
+	}
+
+	mrb.DefineClass("Hello", mrb.ObjectClass())
+	class = mrb.Class("Hello", mrb.ObjectClass())
+	if class == nil {
+		t.Fatal("class should not be nil")
+	}
+}
+
+func TestMrbConstDefined(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	if !mrb.ConstDefined("Object", mrb.ObjectClass().Value()) {
+		t.Fatal("Object should be defined")
+	}
+
+	mrb.DefineClass("Hello", mrb.ObjectClass())
+	if !mrb.ConstDefined("Hello", mrb.ObjectClass().Value()) {
+		t.Fatal("Hello should be defined")
+	}
+}
+
 func TestMrbDefineClass(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()

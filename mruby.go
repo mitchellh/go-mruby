@@ -1,5 +1,7 @@
 package mruby
 
+import "unsafe"
+
 // #cgo CFLAGS: -Ivendor/mruby/include
 // #cgo LDFLAGS: -lm libmruby.a
 // #include "gomruby.h"
@@ -46,11 +48,6 @@ func (m *Mrb) ArenaSave() ArenaIndex {
 	return ArenaIndex(C.mrb_gc_arena_save(m.state))
 }
 
-// Returns the Object top-level class.
-func (m *Mrb) ObjectClass() *Class {
-	return newClass(m, m.state.object_class)
-}
-
 // Define a new top-level class.
 func (m *Mrb) DefineClass(name string, super *Class) *Class {
 	if super == nil {
@@ -59,6 +56,31 @@ func (m *Mrb) DefineClass(name string, super *Class) *Class {
 
 	return newClass(
 		m, C.mrb_define_class(m.state, C.CString(name), super.class))
+}
+
+// Class returns the class with the given name and superclass. Note that
+// if you call this with a class that doesn't exist, mruby will abort the
+// application (like a panic, but not a Go panic).
+func (m *Mrb) Class(name string, super *Class) *Class {
+	var class *C.struct_RClass
+	if super == nil {
+		class = C.mrb_class_get(m.state, C.CString(name))
+	} else {
+		class = C.mrb_class_get_under(m.state, super.class, C.CString(name))
+	}
+
+	return newClass(m, class)
+}
+
+// ConstDefined checks if the given constant is defined in the scope.
+//
+// This should be used, for example, before a call to Class, because a
+// failure in Class will crash your program (by design). You can retrieve
+// the Value of a Class by calling Value().
+func (m *Mrb) ConstDefined(name string, scope *Value) bool {
+	b := C.mrb_const_defined(
+		m.state, scope.value, C.mrb_intern_cstr(m.state, C.CString(name)))
+	return C.ushort(b) != 0
 }
 
 // GetArgs returns all the arguments that were given to the currnetly
@@ -113,8 +135,23 @@ func (m *Mrb) Close() {
 }
 
 //-------------------------------------------------------------------
-// Functions below return Values
+// Functions below return Values or constant Classes
 //-------------------------------------------------------------------
+
+// Returns the Object top-level class.
+func (m *Mrb) ObjectClass() *Class {
+	return newClass(m, m.state.object_class)
+}
+
+// Returns the Object top-level class.
+func (m *Mrb) KernelModule() *Class {
+	return newClass(m, m.state.kernel_module)
+}
+
+// Returns the top-level `self` value.
+func (m *Mrb) TopSelf() *Value {
+	return newValue(m.state, C.mrb_obj_value(unsafe.Pointer(m.state.top_self)))
+}
 
 // Returns a Value for "false"
 func (m *Mrb) FalseValue() *Value {
