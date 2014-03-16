@@ -47,6 +47,17 @@ func TestMrbValueString(t *testing.T) {
 	}
 }
 
+func TestIntMrbValue(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	var value Value = Int(42)
+	v := value.MrbValue(mrb)
+	if v.Fixnum() != 42 {
+		t.Fatalf("bad value")
+	}
+}
+
 func TestStringMrbValue(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()

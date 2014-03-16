@@ -13,6 +13,7 @@ type Value interface {
 	MrbValue(*Mrb) *MrbValue
 }
 
+type Int int
 type String string
 
 // MrbValue is a "value" internally in mruby. A "value" is what mruby calls
@@ -111,9 +112,12 @@ func (v *MrbValue) String() string {
 // Native Go types implementing the Value interface
 //-------------------------------------------------------------------
 
+func (i Int) MrbValue(m *Mrb) *MrbValue {
+	return m.FixnumValue(int(i))
+}
+
 func (s String) MrbValue(m *Mrb) *MrbValue {
-	return newValue(m.state,
-		C.mrb_str_new_cstr(m.state, C.CString(string(s))))
+	return m.StringValue(string(s))
 }
 
 //-------------------------------------------------------------------
