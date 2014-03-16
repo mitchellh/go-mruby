@@ -59,6 +59,12 @@ func TestMrbDefineClass(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
+
+	mrb.DefineClass("World", nil)
+	_, err = mrb.LoadString("World")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
 }
 
 func TestMrbGetArgs(t *testing.T) {

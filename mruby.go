@@ -49,9 +49,11 @@ func (m *Mrb) ArenaSave() ArenaIndex {
 }
 
 // Define a new top-level class.
+//
+// If super is nil, the class will be defined under Object.
 func (m *Mrb) DefineClass(name string, super *Class) *Class {
 	if super == nil {
-		panic("WHAT")
+		super = m.ObjectClass()
 	}
 
 	return newClass(
