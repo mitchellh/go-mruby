@@ -4,6 +4,9 @@
  * for the compilation of the Go library.
  * */
 
+#ifndef _GOMRUBY_H_INCLUDED
+#define _GOMRUBY_H_INCLUDED
+
 #include <mruby.h>
 #include <mruby/class.h>
 #include <mruby/compile.h>
@@ -34,12 +37,31 @@ static inline mrb_func_t _go_mrb_func_t() {
 //-------------------------------------------------------------------
 // Helpers to deal with getting arguments
 //-------------------------------------------------------------------
+// This is declard in args.go
+extern void go_get_arg_append(mrb_value*);
 
 // Our implementation of mrb_get_args which only returns mrb_values.
 static inline mrb_value _go_mrb_get_arg_value(mrb_state *s, const char *format) {
     mrb_value v;
     mrb_get_args(s, format, &v);
     return v;
+}
+
+static inline int _go_mrb_get_args_all(mrb_state *s) {
+    mrb_value *argv;
+    mrb_value block;
+    int argc, i, count;
+
+    count = mrb_get_args(s, "*&", &argv, &argc, &block);
+    for (i = 0; i < argc; i++) {
+        go_get_arg_append(&argv[i]);
+    }
+
+    if (!mrb_nil_p(block)) {
+        go_get_arg_append(&block);
+    }
+
+    return count;
 }
 
 //-------------------------------------------------------------------
@@ -78,3 +100,5 @@ static inline int _go_mrb_fixnum(mrb_value o) {
 static inline enum mrb_vtype _go_mrb_type(mrb_value o) {
     return mrb_type(o);
 }
+
+#endif

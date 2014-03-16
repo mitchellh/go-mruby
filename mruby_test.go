@@ -33,43 +33,38 @@ func TestMrbDefineClass(t *testing.T) {
 func TestMrbGetArgs(t *testing.T) {
 	cases := []struct {
 		args   string
-		format string
 		types  []ValueType
 		result []string
 	}{
 		{
 			`("foo")`,
-			"o",
 			[]ValueType{TypeString},
 			[]string{`"foo"`},
 		},
 
 		{
 			`(true)`,
-			"o",
 			[]ValueType{TypeTrue},
 			[]string{`true`},
 		},
 
 		{
 			`(Hello)`,
-			"C",
 			[]ValueType{TypeClass},
 			[]string{`Hello`},
 		},
 
 		{
 			`() { }`,
-			"&",
 			[]ValueType{TypeProc},
 			nil,
 		},
 	}
 
 	for _, tc := range cases {
-		var actual []interface{}
+		var actual []*Value
 		testFunc := func(m *Mrb, self *Value) *Value {
-			actual = m.GetArgs(tc.format)
+			actual = m.GetArgs()
 			return self
 		}
 
@@ -91,8 +86,7 @@ func TestMrbGetArgs(t *testing.T) {
 
 		actualStrings := make([]string, len(actual))
 		actualTypes := make([]ValueType, len(actual))
-		for i, raw := range actual {
-			v := raw.(*Value)
+		for i, v := range actual {
 			str, err := v.Call("inspect")
 			if err != nil {
 				t.Fatalf("err: %s", err)
@@ -103,8 +97,8 @@ func TestMrbGetArgs(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(actualTypes, tc.types) {
-			t.Fatalf("expected: %#v\nactual: %#v",
-				tc.types, actualTypes)
+			t.Fatalf("code: %s\nexpected: %#v\nactual: %#v",
+				tc.args, tc.types, actualTypes)
 		}
 
 		if tc.result != nil {
