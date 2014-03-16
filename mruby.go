@@ -60,6 +60,22 @@ func (m *Mrb) DefineClass(name string, super *Class) *Class {
 		m, C.mrb_define_class(m.state, C.CString(name), super.class))
 }
 
+// DefineClassUnder defines a new class under another class.
+//
+// This is, for example, how you would define the World class in
+// `Hello::World` where Hello is the "outer" class.
+func (m *Mrb) DefineClassUnder(name string, super *Class, outer *Class) *Class {
+	if super == nil {
+		super = m.ObjectClass()
+	}
+	if outer == nil {
+		outer = m.ObjectClass()
+	}
+
+	return newClass(m, C.mrb_define_class_under(
+		m.state, outer.class, C.CString(name), super.class))
+}
+
 // Class returns the class with the given name and superclass. Note that
 // if you call this with a class that doesn't exist, mruby will abort the
 // application (like a panic, but not a Go panic).

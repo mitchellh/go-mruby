@@ -67,6 +67,32 @@ func TestMrbDefineClass(t *testing.T) {
 	}
 }
 
+func TestMrbDefineClassUnder(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	// Define an outer
+	hello := mrb.DefineClass("Hello", mrb.ObjectClass())
+	_, err := mrb.LoadString("Hello")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Inner
+	mrb.DefineClassUnder("World", nil, hello)
+	_, err = mrb.LoadString("Hello::World")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Inner defaults
+	mrb.DefineClassUnder("Another", nil, nil)
+	_, err = mrb.LoadString("Another")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
 func TestMrbGetArgs(t *testing.T) {
 	cases := []struct {
 		args   string
