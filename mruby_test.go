@@ -173,7 +173,7 @@ func TestMrbGetArgs(t *testing.T) {
 
 	for _, tc := range cases {
 		var actual []*MrbValue
-		testFunc := func(m *Mrb, self *MrbValue) *MrbValue {
+		testFunc := func(m *Mrb, self *MrbValue) Value {
 			actual = m.GetArgs()
 			return self
 		}

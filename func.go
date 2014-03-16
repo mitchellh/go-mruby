@@ -9,7 +9,7 @@ import "C"
 
 // Func is the signature of a function in Go that you use to expose to Ruby
 // code.
-type Func func(m *Mrb, self *MrbValue) *MrbValue
+type Func func(m *Mrb, self *MrbValue) Value
 
 type classMethodMap map[*C.struct_RClass]methodMap
 type methodMap map[C.mrb_sym]Func
@@ -48,8 +48,9 @@ func go_mrb_func_call(s *C.mrb_state, v *C.mrb_value) C.mrb_value {
 
 	// Call the method to get our *Value
 	// TODO(mitchellh): reuse the Mrb instead of allocating every time
-	value := f(&Mrb{s}, newValue(s, *v))
-	return value.value
+	mrb := &Mrb{s}
+	value := f(mrb, newValue(s, *v))
+	return value.MrbValue(mrb).value
 }
 
 func insertMethod(s *C.mrb_state, c *C.struct_RClass, n string, f Func) {

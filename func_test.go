@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func testCallback(m *Mrb, self *MrbValue) *MrbValue {
-	return m.FixnumValue(42)
+func testCallback(m *Mrb, self *MrbValue) Value {
+	return Int(42)
 }
 
 func testCallbackResult(t *testing.T, v *MrbValue) {

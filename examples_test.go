@@ -9,9 +9,9 @@ func ExampleCustomFunction() {
 	defer mrb.Close()
 
 	// Our custom function we'll expose to Ruby
-	addFunc := func(m *Mrb, self *MrbValue) *MrbValue {
+	addFunc := func(m *Mrb, self *MrbValue) Value {
 		args := m.GetArgs()
-		return m.FixnumValue(args[0].Fixnum() + args[1].Fixnum())
+		return Int(args[0].Fixnum() + args[1].Fixnum())
 	}
 
 	// Lets define a custom class and a class method we can call.
