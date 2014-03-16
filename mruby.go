@@ -13,8 +13,15 @@ type Mrb struct {
 }
 
 // ArenaIndex represents the index into the arena portion of the GC.
+//
+// See ArenaSave for more information.
 type ArenaIndex int
 
+// NewMrb creates a new instance of Mrb, representing the state of a single
+// Ruby VM.
+//
+// When you're finished with the VM, clean up all resources it is using
+// by calling the Close method.
 func NewMrb() *Mrb {
 	state := C.mrb_open()
 
@@ -40,6 +47,11 @@ func (m *Mrb) ArenaRestore(idx ArenaIndex) {
 // ArenaRestore, these objects can be garbage collected. Otherwise, the
 // objects will never be garbage collected.
 //
+// The recommended usage pattern for memory management is to save
+// the arena index prior to any Ruby execution, to turn the resulting
+// Ruby value into Go values as you see fit, then to restore the arena
+// index so that GC can collect any values.
+//
 // Of course, when Close() is called, all objects in the arena are
 // garbage collected anyways, so if you're only calling mruby for a short
 // period of time, you might not have to worry about saving/restoring the
@@ -47,6 +59,101 @@ func (m *Mrb) ArenaRestore(idx ArenaIndex) {
 func (m *Mrb) ArenaSave() ArenaIndex {
 	return ArenaIndex(C.mrb_gc_arena_save(m.state))
 }
+
+// Class returns the class with the given name and superclass. Note that
+// if you call this with a class that doesn't exist, mruby will abort the
+// application (like a panic, but not a Go panic).
+func (m *Mrb) Class(name string, super *Class) *Class {
+	var class *C.struct_RClass
+	if super == nil {
+		class = C.mrb_class_get(m.state, C.CString(name))
+	} else {
+		class = C.mrb_class_get_under(m.state, super.class, C.CString(name))
+	}
+
+	return newClass(m, class)
+}
+
+// ConstDefined checks if the given constant is defined in the scope.
+//
+// This should be used, for example, before a call to Class, because a
+// failure in Class will crash your program (by design). You can retrieve
+// the Value of a Class by calling Value().
+func (m *Mrb) ConstDefined(name string, scope *MrbValue) bool {
+	b := C.mrb_const_defined(
+		m.state, scope.value, C.mrb_intern_cstr(m.state, C.CString(name)))
+	return C.ushort(b) != 0
+}
+
+// FullGC executes a complete GC cycle on the VM.
+func (m *Mrb) FullGC() {
+	C.mrb_full_gc(m.state)
+}
+
+// GetArgs returns all the arguments that were given to the currnetly
+// called function (currently on the stack).
+func (m *Mrb) GetArgs() []*MrbValue {
+	getArgLock.Lock()
+	defer getArgLock.Unlock()
+
+	// If we haven't initialized the accumulator yet, do it. We then
+	// keep this slice cached around forever.
+	if getArgAccumulator == nil {
+		getArgAccumulator = make([]*C.mrb_value, 0, 5)
+	}
+
+	// Get all the arguments and put it into our accumulator
+	C._go_mrb_get_args_all(m.state)
+
+	// Convert those all to values
+	values := make([]*MrbValue, len(getArgAccumulator))
+	for i, v := range getArgAccumulator {
+		values[i] = newValue(m.state, *v)
+
+		// Unset the accumulator value for GC
+		getArgAccumulator[i] = nil
+	}
+
+	// Clear reset the accumulator to zero length
+	getArgAccumulator = getArgAccumulator[:0]
+
+	return values
+}
+
+// IncrementalGC runs an incremental GC step. It is much less expensive
+// than a FullGC, but must be called multiple times for GC to actually
+// happen.
+//
+// This function is best called periodically when executing Ruby in
+// the VM many times (thousands of times).
+func (m *Mrb) IncrementalGC() {
+	C.mrb_incremental_gc(m.state)
+}
+
+// LoadString loads the given code, executes it, and returns its final
+// value that it might return.
+func (m *Mrb) LoadString(code string) (*MrbValue, error) {
+	value := C.mrb_load_string(m.state, C.CString(code))
+	if m.state.exc != nil {
+		return nil, newExceptionValue(m.state)
+	}
+
+	return newValue(m.state, value), nil
+}
+
+// Close a Mrb, this must be called to properly free resources, and
+// should only be called once.
+func (m *Mrb) Close() {
+	// Delete all the methods from the state
+	delete(stateMethodTable, m.state)
+
+	// Close the state
+	C.mrb_close(m.state)
+}
+
+//-------------------------------------------------------------------
+// Functions handling defining new classes/modules in the VM
+//-------------------------------------------------------------------
 
 // Define a new top-level class.
 //
@@ -89,82 +196,6 @@ func (m *Mrb) DefineModuleUnder(name string, outer *Class) *Class {
 
 	return newClass(m,
 		C.mrb_define_module_under(m.state, outer.class, C.CString(name)))
-}
-
-// Class returns the class with the given name and superclass. Note that
-// if you call this with a class that doesn't exist, mruby will abort the
-// application (like a panic, but not a Go panic).
-func (m *Mrb) Class(name string, super *Class) *Class {
-	var class *C.struct_RClass
-	if super == nil {
-		class = C.mrb_class_get(m.state, C.CString(name))
-	} else {
-		class = C.mrb_class_get_under(m.state, super.class, C.CString(name))
-	}
-
-	return newClass(m, class)
-}
-
-// ConstDefined checks if the given constant is defined in the scope.
-//
-// This should be used, for example, before a call to Class, because a
-// failure in Class will crash your program (by design). You can retrieve
-// the Value of a Class by calling Value().
-func (m *Mrb) ConstDefined(name string, scope *MrbValue) bool {
-	b := C.mrb_const_defined(
-		m.state, scope.value, C.mrb_intern_cstr(m.state, C.CString(name)))
-	return C.ushort(b) != 0
-}
-
-// GetArgs returns all the arguments that were given to the currnetly
-// called function (currently on the stack).
-func (m *Mrb) GetArgs() []*MrbValue {
-	getArgLock.Lock()
-	defer getArgLock.Unlock()
-
-	// If we haven't initialized the accumulator yet, do it. We then
-	// keep this slice cached around forever.
-	if getArgAccumulator == nil {
-		getArgAccumulator = make([]*C.mrb_value, 0, 5)
-	}
-
-	// Get all the arguments and put it into our accumulator
-	C._go_mrb_get_args_all(m.state)
-
-	// Convert those all to values
-	values := make([]*MrbValue, len(getArgAccumulator))
-	for i, v := range getArgAccumulator {
-		values[i] = newValue(m.state, *v)
-
-		// Unset the accumulator value for GC
-		getArgAccumulator[i] = nil
-	}
-
-	// Clear reset the accumulator to zero length
-	getArgAccumulator = getArgAccumulator[:0]
-
-	return values
-}
-
-// LoadString loads the given code, executes it, and returns its final
-// value that it might return.
-func (m *Mrb) LoadString(code string) (*MrbValue, error) {
-	value := C.mrb_load_string(m.state, C.CString(code))
-	if m.state.exc != nil {
-		return nil, newExceptionValue(m.state)
-	}
-
-	return newValue(m.state, value), nil
-}
-
-// Close a Mrb, this must be called to properly free resources, and
-// should only be called once.
-func (m *Mrb) Close() {
-	// Delete all the methods from the state
-	delete(stateMethodTable, m.state)
-
-	// Close the state
-	C.mrb_close(m.state)
 }
 
 //-------------------------------------------------------------------

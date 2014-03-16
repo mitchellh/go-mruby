@@ -140,6 +140,23 @@ func TestMrbFixnumValue(t *testing.T) {
 	}
 }
 
+func TestMrbFullGC(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	ai := mrb.ArenaSave()
+	value := mrb.StringValue("foo")
+	if value.IsDead() {
+		t.Fatal("should not be dead")
+	}
+
+	mrb.ArenaRestore(ai)
+	mrb.FullGC()
+	if !value.IsDead() {
+		t.Fatal("should be dead")
+	}
+}
+
 func TestMrbGetArgs(t *testing.T) {
 	cases := []struct {
 		args   string

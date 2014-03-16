@@ -84,6 +84,11 @@ func (v *MrbValue) Call(method string, args ...Value) (*MrbValue, error) {
 	return newValue(v.state, result), nil
 }
 
+// IsDead tells you if an object has been collected by the GC or not.
+func (v *MrbValue) IsDead() bool {
+	return C._go_mrb_is_dead(v.state, v.value) != 0
+}
+
 // MrbValue so that *MrbValue implements the "Value" interface.
 func (v *MrbValue) MrbValue(*Mrb) *MrbValue {
 	return v

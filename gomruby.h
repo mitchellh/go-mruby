@@ -93,6 +93,10 @@ static inline int _go_mrb_fixnum(mrb_value o) {
     return mrb_fixnum(o);
 }
 
+static inline short _go_mrb_is_dead(mrb_state *s, mrb_value o) {
+    return is_dead(s, mrb_obj_ptr(o));
+}
+
 static inline enum mrb_vtype _go_mrb_type(mrb_value o) {
     return mrb_type(o);
 }
