@@ -110,7 +110,7 @@ func (m *Mrb) Class(name string, super *Class) *Class {
 // This should be used, for example, before a call to Class, because a
 // failure in Class will crash your program (by design). You can retrieve
 // the Value of a Class by calling Value().
-func (m *Mrb) ConstDefined(name string, scope *Value) bool {
+func (m *Mrb) ConstDefined(name string, scope *MrbValue) bool {
 	b := C.mrb_const_defined(
 		m.state, scope.value, C.mrb_intern_cstr(m.state, C.CString(name)))
 	return C.ushort(b) != 0
@@ -118,7 +118,7 @@ func (m *Mrb) ConstDefined(name string, scope *Value) bool {
 
 // GetArgs returns all the arguments that were given to the currnetly
 // called function (currently on the stack).
-func (m *Mrb) GetArgs() []*Value {
+func (m *Mrb) GetArgs() []*MrbValue {
 	getArgLock.Lock()
 	defer getArgLock.Unlock()
 
@@ -132,7 +132,7 @@ func (m *Mrb) GetArgs() []*Value {
 	C._go_mrb_get_args_all(m.state)
 
 	// Convert those all to values
-	values := make([]*Value, len(getArgAccumulator))
+	values := make([]*MrbValue, len(getArgAccumulator))
 	for i, v := range getArgAccumulator {
 		values[i] = newValue(m.state, *v)
 
@@ -148,7 +148,7 @@ func (m *Mrb) GetArgs() []*Value {
 
 // LoadString loads the given code, executes it, and returns its final
 // value that it might return.
-func (m *Mrb) LoadString(code string) (*Value, error) {
+func (m *Mrb) LoadString(code string) (*MrbValue, error) {
 	value := C.mrb_load_string(m.state, C.CString(code))
 	if m.state.exc != nil {
 		return nil, newExceptionValue(m.state)
@@ -182,23 +182,26 @@ func (m *Mrb) KernelModule() *Class {
 }
 
 // Returns the top-level `self` value.
-func (m *Mrb) TopSelf() *Value {
+func (m *Mrb) TopSelf() *MrbValue {
 	return newValue(m.state, C.mrb_obj_value(unsafe.Pointer(m.state.top_self)))
 }
 
 // Returns a Value for "false"
-func (m *Mrb) FalseValue() *Value {
+func (m *Mrb) FalseValue() *MrbValue {
 	return newValue(m.state, C.mrb_false_value())
 }
 
 // Returns a Value for "true"
-func (m *Mrb) TrueValue() *Value {
+func (m *Mrb) TrueValue() *MrbValue {
 	return newValue(m.state, C.mrb_true_value())
 }
 
 // Returns a Value for a fixed number.
-func (m *Mrb) FixnumValue(v int) *Value {
+func (m *Mrb) FixnumValue(v int) *MrbValue {
 	return newValue(m.state, C.mrb_fixnum_value(C.mrb_int(v)))
 }
 
-
+// Returns a Value for a string.
+func (m *Mrb) StringValue(s string) *MrbValue {
+	return newValue(m.state, C.mrb_str_new_cstr(m.state, C.CString(s)))
+}

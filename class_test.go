@@ -37,7 +37,7 @@ func TestClassValue(t *testing.T) {
 	defer mrb.Close()
 
 	class := mrb.DefineClass("Hello", mrb.ObjectClass())
-	value := class.Value()
+	value := class.MrbValue()
 	if value.Type() != TypeClass {
 		t.Fatalf("bad: %d", value.Type())
 	}

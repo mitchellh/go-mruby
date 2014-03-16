@@ -40,12 +40,12 @@ func TestMrbConstDefined(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
 
-	if !mrb.ConstDefined("Object", mrb.ObjectClass().Value()) {
+	if !mrb.ConstDefined("Object", mrb.ObjectClass().MrbValue()) {
 		t.Fatal("Object should be defined")
 	}
 
 	mrb.DefineClass("Hello", mrb.ObjectClass())
-	if !mrb.ConstDefined("Hello", mrb.ObjectClass().Value()) {
+	if !mrb.ConstDefined("Hello", mrb.ObjectClass().MrbValue()) {
 		t.Fatal("Hello should be defined")
 	}
 }
@@ -130,6 +130,16 @@ func TestMrbDefineModuleUnder(t *testing.T) {
 	}
 }
 
+func TestMrbFixnumValue(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	value := mrb.FixnumValue(42)
+	if value.Type() != TypeFixnum {
+		t.Fatalf("should be fixnum")
+	}
+}
+
 func TestMrbGetArgs(t *testing.T) {
 	cases := []struct {
 		args   string
@@ -162,8 +172,8 @@ func TestMrbGetArgs(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		var actual []*Value
-		testFunc := func(m *Mrb, self *Value) *Value {
+		var actual []*MrbValue
+		testFunc := func(m *Mrb, self *MrbValue) *MrbValue {
 			actual = m.GetArgs()
 			return self
 		}
@@ -180,7 +190,7 @@ func TestMrbGetArgs(t *testing.T) {
 		if tc.result != nil {
 			if len(actual) != len(tc.result) {
 				t.Fatalf("%s: expected %d, got %d",
-				tc.args, len(tc.result), len(actual))
+					tc.args, len(tc.result), len(actual))
 			}
 		}
 
@@ -204,7 +214,7 @@ func TestMrbGetArgs(t *testing.T) {
 		if tc.result != nil {
 			if !reflect.DeepEqual(actualStrings, tc.result) {
 				t.Fatalf("expected: %#v\nactual: %#v",
-				tc.result, actualStrings)
+					tc.result, actualStrings)
 			}
 		}
 	}

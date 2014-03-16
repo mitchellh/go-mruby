@@ -7,8 +7,18 @@ import (
 // #include "gomruby.h"
 import "C"
 
-// Value represents an mrb_value.
-type Value struct {
+// Value is an interface that should be implemented by anything that can
+// be represents as an mruby value.
+type Value interface {
+	MrbValue(*Mrb) *MrbValue
+}
+
+type String string
+
+// MrbValue is a "value" internally in mruby. A "value" is what mruby calls
+// basically anything in Ruby: a class, an object (instance), a variable,
+// etc.
+type MrbValue struct {
 	value C.mrb_value
 	state *C.mrb_state
 }
@@ -46,7 +56,7 @@ const (
 
 // Call calls a method with the given name and arguments on this
 // value.
-func (v *Value) Call(method string, args ...*Value) (*Value, error) {
+func (v *MrbValue) Call(method string, args ...*MrbValue) (*MrbValue, error) {
 	result := C.mrb_funcall_argv(
 		v.state,
 		v.value,
@@ -60,23 +70,55 @@ func (v *Value) Call(method string, args ...*Value) (*Value, error) {
 	return newValue(v.state, result), nil
 }
 
+// MrbValue so that *MrbValue implements the "Value" interface.
+func (v *MrbValue) MrbValue(*Mrb) *MrbValue {
+	return v
+}
+
+func (v *MrbValue) Type() ValueType {
+	return ValueType(C._go_mrb_type(v.value))
+}
+
+// Exception is a special type of value that represents an error
+// and implements the Error interface.
+type Exception struct {
+	*MrbValue
+}
+
+func (e *Exception) Error() string {
+	return e.String()
+}
+
+//-------------------------------------------------------------------
+// Type conversions to Go types
+//-------------------------------------------------------------------
+
 // Fixnum returns the numeric value of this object if the Type() is
 // TypeFixnum. Calling this with any other type will result in undefined
 // behavior.
-func (v *Value) Fixnum() int {
+func (v *MrbValue) Fixnum() int {
 	return int(C._go_mrb_fixnum(v.value))
 }
 
 // String returns the "to_s" result of this value.
-func (v *Value) String() string {
+func (v *MrbValue) String() string {
 	value := C.mrb_obj_as_string(v.state, v.value)
 	result := C.GoString(C.mrb_string_value_ptr(v.state, value))
 	return result
 }
 
-func (v *Value) Type() ValueType {
-	return ValueType(C._go_mrb_type(v.value))
+//-------------------------------------------------------------------
+// Native Go types implementing the Value interface
+//-------------------------------------------------------------------
+
+func (s String) MrbValue(m *Mrb) *MrbValue {
+	return newValue(m.state,
+		C.mrb_str_new_cstr(m.state, C.CString(string(s))))
 }
+
+//-------------------------------------------------------------------
+// Internal Functions
+//-------------------------------------------------------------------
 
 func newExceptionValue(s *C.mrb_state) *Exception {
 	if s.exc == nil {
@@ -87,22 +129,14 @@ func newExceptionValue(s *C.mrb_state) *Exception {
 	value := C.mrb_obj_value(unsafe.Pointer(s.exc))
 
 	result := newValue(s, value)
-	return &Exception{Value: result}
+	return &Exception{MrbValue: result}
 }
 
-func newValue(s *C.mrb_state, v C.mrb_value) *Value {
-	return &Value{
+func newValue(s *C.mrb_state, v C.mrb_value) *MrbValue {
+	return &MrbValue{
 		state: s,
 		value: v,
 	}
 }
 
-// Exception is a special type of value that represents an error
-// and implements the Error interface.
-type Exception struct {
-	*Value
-}
 
-func (e *Exception) Error() string {
-	return e.String()
-}

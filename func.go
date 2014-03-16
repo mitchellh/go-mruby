@@ -9,7 +9,7 @@ import "C"
 
 // Func is the signature of a function in Go that you use to expose to Ruby
 // code.
-type Func func(m *Mrb, self *Value) *Value
+type Func func(m *Mrb, self *MrbValue) *MrbValue
 
 type classMethodMap map[*C.struct_RClass]methodMap
 type methodMap map[C.mrb_sym]Func

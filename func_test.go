@@ -4,11 +4,11 @@ import (
 	"testing"
 )
 
-func testCallback(m *Mrb, self *Value) *Value {
+func testCallback(m *Mrb, self *MrbValue) *MrbValue {
 	return m.FixnumValue(42)
 }
 
-func testCallbackResult(t *testing.T, v *Value) {
+func testCallbackResult(t *testing.T, v *MrbValue) {
 	if v.Type() != TypeFixnum {
 		t.Fatalf("bad type: %d", v.Type())
 	}
