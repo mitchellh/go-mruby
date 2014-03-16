@@ -40,13 +40,8 @@ static inline mrb_func_t _go_mrb_func_t() {
 // This is declard in args.go
 extern void go_get_arg_append(mrb_value*);
 
-// Our implementation of mrb_get_args which only returns mrb_values.
-static inline mrb_value _go_mrb_get_arg_value(mrb_state *s, const char *format) {
-    mrb_value v;
-    mrb_get_args(s, format, &v);
-    return v;
-}
-
+// This gets all arguments given to a function call and adds them to
+// the accumulator in Go.
 static inline int _go_mrb_get_args_all(mrb_state *s) {
     mrb_value *argv;
     mrb_value block;
