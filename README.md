@@ -70,6 +70,7 @@ package main
 
 import (
 	"github.com/mitchellh/go-mruby"
+	"fmt"
 )
 
 func main() {
@@ -86,7 +87,7 @@ func main() {
 
 	// Lets define a custom class and a class method we can call.
 	class := mrb.DefineClass("Example", nil)
-	class.DefineClassMethod("add", addFunc, ArgsReq(2))
+	class.DefineClassMethod("add", addFunc, mruby.ArgsReq(2))
 
 	// Let's call it and inspect the result
 	result, err := mrb.LoadString(`Example.add(12, 30)`)
