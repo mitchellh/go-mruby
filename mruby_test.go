@@ -249,3 +249,24 @@ func TestMrbLoadString(t *testing.T) {
 		t.Fatalf("should have value")
 	}
 }
+
+func TestMrbLoadString_twice(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	value, err := mrb.LoadString(`"HELLO"`)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if value == nil {
+		t.Fatalf("should have value")
+	}
+
+	value, err = mrb.LoadString(`"WORLD"`)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if value.String() != "WORLD" {
+		t.Fatalf("bad: %s", value)
+	}
+}
