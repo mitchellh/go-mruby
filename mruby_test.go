@@ -294,9 +294,12 @@ func TestMrbRaise(t *testing.T) {
 
 	class := mrb.DefineClass("Hello", mrb.ObjectClass())
 	class.DefineClassMethod("foo", cb, ArgsReq(1))
-	_, err := mrb.LoadString(`Hello.foo(ArgumentError.new("foo"))`)
+	_, err := mrb.LoadString(`Hello.foo(ArgumentError.new("ouch"))`)
 	if err == nil {
 		t.Fatal("should have error")
+	}
+	if  err.Error() != "ouch" {
+		t.Fatalf("bad: %s", err)
 	}
 }
 
