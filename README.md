@@ -69,8 +69,8 @@ an example below:
 package main
 
 import (
-	"github.com/mitchellh/go-mruby"
 	"fmt"
+	"github.com/mitchellh/go-mruby"
 )
 
 func main() {
