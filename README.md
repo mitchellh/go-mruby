@@ -76,10 +76,12 @@ func main() {
 	mrb := mruby.NewMrb()
 	defer mrb.Close()
 
-	// Our custom function we'll expose to Ruby
-	addFunc := func(m *mruby.Mrb, self *mruby.MrbValue) mruby.Value {
+	// Our custom function we'll expose to Ruby. The first return
+	// value is what to return from the func and the second is an
+	// exception to raise (if any).
+	addFunc := func(m *mruby.Mrb, self *mruby.MrbValue) (mruby.Value, mruby.Value) {
 		args := m.GetArgs()
-		return mruby.Int(args[0].Fixnum() + args[1].Fixnum())
+		return mruby.Int(args[0].Fixnum() + args[1].Fixnum()), nil
 	}
 
 	// Lets define a custom class and a class method we can call.
