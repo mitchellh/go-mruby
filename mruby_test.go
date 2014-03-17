@@ -203,9 +203,9 @@ func TestMrbGetArgs(t *testing.T) {
 
 	for _, tc := range cases {
 		var actual []*MrbValue
-		testFunc := func(m *Mrb, self *MrbValue) Value {
+		testFunc := func(m *Mrb, self *MrbValue) (Value, Value) {
 			actual = m.GetArgs()
-			return self
+			return self, nil
 		}
 
 		mrb := NewMrb()
@@ -284,17 +284,33 @@ func TestMrbLoadString_twice(t *testing.T) {
 	}
 }
 
+func TestMrbRaise(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	cb := func(m *Mrb, self *MrbValue) (Value, Value) {
+		return nil, m.GetArgs()[0]
+	}
+
+	class := mrb.DefineClass("Hello", mrb.ObjectClass())
+	class.DefineClassMethod("foo", cb, ArgsReq(1))
+	_, err := mrb.LoadString(`Hello.foo(ArgumentError.new("foo"))`)
+	if err == nil {
+		t.Fatal("should have error")
+	}
+}
+
 func TestMrbYield(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
 
-	cb := func(m *Mrb, self *MrbValue) Value {
+	cb := func(m *Mrb, self *MrbValue) (Value, Value) {
 		result, err := m.Yield(m.GetArgs()[0], Int(12), Int(30))
 		if err != nil {
 			t.Fatalf("err: %s", err)
 		}
 
-		return result
+		return result, nil
 	}
 
 	class := mrb.DefineClass("Hello", mrb.ObjectClass())

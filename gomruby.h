@@ -21,13 +21,20 @@
 //-------------------------------------------------------------------
 // This is declard in func.go and is a way for us to call back into
 // Go to execute a method.
-extern mrb_value go_mrb_func_call(mrb_state*, mrb_value*);
+extern mrb_value *go_mrb_func_call(mrb_state*, mrb_value*, mrb_value*);
 
 // This calls into Go with a similar signature to mrb_func_t. We have to
 // change it slightly because cgo can't handle the union type of mrb_value,
-// so we pass in a pointer instead.
+// so we pass in a pointer instead. Additionally, the result is also a
+// pointer to work around Go's confusion with unions.
 static inline mrb_value _go_mrb_func_call(mrb_state *s, mrb_value self) {
-    return go_mrb_func_call(s, &self);
+    mrb_value exc = mrb_nil_value();
+    mrb_value result = *go_mrb_func_call(s, &self, &exc);
+    if (!mrb_nil_p(exc)) {
+        mrb_exc_raise(s, exc);
+    }
+
+    return result;
 }
 
 // This method is used as a way to get a valid mrb_func_t that actually

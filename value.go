@@ -14,7 +14,11 @@ type Value interface {
 }
 
 type Int int
+type NilType [0]byte
 type String string
+
+// Nil is a constant that can be used as a Nil Value
+var Nil NilType
 
 // MrbValue is a "value" internally in mruby. A "value" is what mruby calls
 // basically anything in Ruby: a class, an object (instance), a variable,
@@ -54,6 +58,10 @@ const (
 	TypeFiber
 	TypeMaxDefine
 )
+
+func init() {
+	Nil = [0]byte{}
+}
 
 // Call calls a method with the given name and arguments on this
 // value.
@@ -139,6 +147,10 @@ func (v *MrbValue) String() string {
 
 func (i Int) MrbValue(m *Mrb) *MrbValue {
 	return m.FixnumValue(int(i))
+}
+
+func (NilType) MrbValue(m *Mrb) *MrbValue {
+	return m.NilValue()
 }
 
 func (s String) MrbValue(m *Mrb) *MrbValue {

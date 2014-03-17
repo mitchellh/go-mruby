@@ -9,7 +9,11 @@ import "C"
 
 // Func is the signature of a function in Go that you use to expose to Ruby
 // code.
-type Func func(m *Mrb, self *MrbValue) Value
+//
+// The first return value is the actual return value for the code.
+//
+// The second return value is an exception, if any. This will be raised.
+type Func func(m *Mrb, self *MrbValue) (Value, Value)
 
 type classMethodMap map[*C.struct_RClass]methodMap
 type methodMap map[C.mrb_sym]Func
@@ -24,7 +28,7 @@ func init() {
 }
 
 //export go_mrb_func_call
-func go_mrb_func_call(s *C.mrb_state, v *C.mrb_value) C.mrb_value {
+func go_mrb_func_call(s *C.mrb_state, v *C.mrb_value, c_exc *C.mrb_value) *C.mrb_value {
 	// Lookup the classes that we've registered methods for in this state
 	classTable := stateMethodTable[s]
 	if classTable == nil {
@@ -49,8 +53,13 @@ func go_mrb_func_call(s *C.mrb_state, v *C.mrb_value) C.mrb_value {
 	// Call the method to get our *Value
 	// TODO(mitchellh): reuse the Mrb instead of allocating every time
 	mrb := &Mrb{s}
-	value := f(mrb, newValue(s, *v))
-	return value.MrbValue(mrb).value
+	result, exc := f(mrb, newValue(s, *v))
+	if exc != nil {
+		*c_exc = exc.MrbValue(mrb).value
+		return &mrb.NilValue().value
+	}
+
+	return &result.MrbValue(mrb).value
 }
 
 func insertMethod(s *C.mrb_state, c *C.struct_RClass, n string, f Func) {

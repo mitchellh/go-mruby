@@ -275,6 +275,11 @@ func (m *Mrb) FalseValue() *MrbValue {
 	return newValue(m.state, C.mrb_false_value())
 }
 
+// NilValue returns "nil"
+func (m *Mrb) NilValue() *MrbValue {
+	return newValue(m.state, C.mrb_nil_value())
+}
+
 // Returns a Value for "true"
 func (m *Mrb) TrueValue() *MrbValue {
 	return newValue(m.state, C.mrb_true_value())
