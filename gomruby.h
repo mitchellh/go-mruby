@@ -30,6 +30,10 @@ extern mrb_value *go_mrb_func_call(mrb_state*, mrb_value*, mrb_value*);
 static inline mrb_value _go_mrb_func_call(mrb_state *s, mrb_value self) {
     mrb_value exc = mrb_nil_value();
     mrb_value result = *go_mrb_func_call(s, &self, &exc);
+
+    // We raise if we got an exception. We have to raise from here and
+    // not from within Go because it messes with Go's calling conventions,
+    // resulting in a broken stack.
     if (!mrb_nil_p(exc)) {
         mrb_exc_raise(s, exc);
     }
