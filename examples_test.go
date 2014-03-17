@@ -32,4 +32,42 @@ func Example_CustomFunction() {
 func Example_LoadFiles() {
 	mrb := NewMrb()
 	defer mrb.Close()
+
+	ctx1 := NewCompileContext(mrb)
+	defer ctx1.Close()
+	ctx1.SetFilename("foo.rb")
+
+	ctx2 := NewCompileContext(mrb)
+	defer ctx2.Close()
+	ctx2.SetFilename("bar.rb")
+
+	parser := NewParser(mrb)
+	defer parser.Close()
+
+	if _, err := parser.Parse("def foo; bar; end", ctx1); err != nil {
+		panic(err.Error())
+	}
+	code1 := parser.GenerateCode()
+
+	if _, err := parser.Parse("def bar; 42; end", ctx2); err != nil {
+		panic(err.Error())
+	}
+	code2 := parser.GenerateCode()
+
+	if _, err := mrb.Run(code1, nil); err != nil {
+		panic(err.Error())
+	}
+
+	if _, err := mrb.Run(code2, nil); err != nil {
+		panic(err.Error())
+	}
+
+	result, err := mrb.LoadString("foo")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	fmt.Printf("Result: %s\n", result)
+	// Output:
+	// Result: 42
 }

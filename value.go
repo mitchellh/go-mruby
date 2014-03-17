@@ -94,6 +94,13 @@ func (v *MrbValue) MrbValue(*Mrb) *MrbValue {
 	return v
 }
 
+// SetProcTargetClass sets the target class where a proc will be executed
+// when this value is a proc.
+func (v *MrbValue) SetProcTargetClass(c *Class) {
+	proc := C._go_mrb_proc_ptr(v.value)
+	proc.target_class = c.class
+}
+
 func (v *MrbValue) Type() ValueType {
 	return ValueType(C._go_mrb_type(v.value))
 }

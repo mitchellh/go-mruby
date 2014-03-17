@@ -151,7 +151,8 @@ func (m *Mrb) Run(v *MrbValue, self *MrbValue) (*MrbValue, error) {
 		self = m.TopSelf()
 	}
 
-	value := C.mrb_run(m.state, C._go_mrb_proc_ptr(v.value), self.value)
+	proc := C._go_mrb_proc_ptr(v.value)
+	value := C.mrb_run(m.state, proc, self.value)
 	if m.state.exc != nil {
 		return nil, newExceptionValue(m.state)
 	}
