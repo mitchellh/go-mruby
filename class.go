@@ -48,6 +48,28 @@ func (c *Class) MrbValue(m *Mrb) *MrbValue {
 	return newValue(c.mrb.state, C.mrb_obj_value(unsafe.Pointer(c.class)))
 }
 
+// Instantiate the class with the given args.
+func (c *Class) New(args ...Value) (*MrbValue, error) {
+	var argv []C.mrb_value = nil
+	var argvPtr *C.mrb_value = nil
+	if len(args) > 0 {
+		// Make the raw byte slice to hold our arguments we'll pass to C
+		argv = make([]C.mrb_value, len(args))
+		for i, arg := range args {
+			argv[i] = arg.MrbValue(c.mrb).value
+		}
+
+		argvPtr = &argv[0]
+	}
+
+	result := C.mrb_obj_new(c.mrb.state, c.class, C.int(len(argv)), argvPtr)
+	if c.mrb.state.exc != nil {
+		return nil, newExceptionValue(c.mrb.state)
+	}
+
+	return newValue(c.mrb.state, result), nil
+}
+
 func newClass(mrb *Mrb, c *C.struct_RClass) *Class {
 	return &Class{
 		class: c,

@@ -63,6 +63,8 @@ func (m *Mrb) ArenaSave() ArenaIndex {
 // Class returns the class with the given name and superclass. Note that
 // if you call this with a class that doesn't exist, mruby will abort the
 // application (like a panic, but not a Go panic).
+//
+// super can be nil, in which case the Object class will be used.
 func (m *Mrb) Class(name string, super *Class) *Class {
 	var class *C.struct_RClass
 	if super == nil {

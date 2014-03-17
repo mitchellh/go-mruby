@@ -47,6 +47,26 @@ func TestClassDefineMethod(t *testing.T) {
 	testCallbackResult(t, value)
 }
 
+func TestClassNew(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	class := mrb.DefineClass("Hello", mrb.ObjectClass())
+	class.DefineMethod("foo", testCallback, ArgsNone())
+
+	instance, err := class.New()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	value, err := instance.Call("foo")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	testCallbackResult(t, value)
+}
+
 func TestClassValue(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
