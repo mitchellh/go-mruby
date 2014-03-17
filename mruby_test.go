@@ -40,12 +40,12 @@ func TestMrbConstDefined(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
 
-	if !mrb.ConstDefined("Object", mrb.ObjectClass().MrbValue()) {
+	if !mrb.ConstDefined("Object", mrb.ObjectClass()) {
 		t.Fatal("Object should be defined")
 	}
 
 	mrb.DefineClass("Hello", mrb.ObjectClass())
-	if !mrb.ConstDefined("Hello", mrb.ObjectClass().MrbValue()) {
+	if !mrb.ConstDefined("Hello", mrb.ObjectClass()) {
 		t.Fatal("Hello should be defined")
 	}
 }

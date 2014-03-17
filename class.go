@@ -44,7 +44,7 @@ func (c *Class) DefineMethod(name string, cb Func, as ArgSpec) {
 
 // Value returns a *Value for this Class. *Values are sometimes required
 // as arguments where classes should be valid.
-func (c *Class) MrbValue() *MrbValue {
+func (c *Class) MrbValue(m *Mrb) *MrbValue {
 	return newValue(c.mrb.state, C.mrb_obj_value(unsafe.Pointer(c.class)))
 }
 

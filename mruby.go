@@ -79,9 +79,10 @@ func (m *Mrb) Class(name string, super *Class) *Class {
 // This should be used, for example, before a call to Class, because a
 // failure in Class will crash your program (by design). You can retrieve
 // the Value of a Class by calling Value().
-func (m *Mrb) ConstDefined(name string, scope *MrbValue) bool {
+func (m *Mrb) ConstDefined(name string, scope Value) bool {
+	scopeV := scope.MrbValue(m).value
 	b := C.mrb_const_defined(
-		m.state, scope.value, C.mrb_intern_cstr(m.state, C.CString(name)))
+		m.state, scopeV, C.mrb_intern_cstr(m.state, C.CString(name)))
 	return C.ushort(b) != 0
 }
 
@@ -146,13 +147,16 @@ func (m *Mrb) LoadString(code string) (*MrbValue, error) {
 // If you're looking to execute code directly a string, look at LoadString.
 //
 // If self is nil, it is set to the top-level self.
-func (m *Mrb) Run(v *MrbValue, self *MrbValue) (*MrbValue, error) {
+func (m *Mrb) Run(v Value, self Value) (*MrbValue, error) {
 	if self == nil {
 		self = m.TopSelf()
 	}
 
-	proc := C._go_mrb_proc_ptr(v.value)
-	value := C.mrb_run(m.state, proc, self.value)
+	mrbV := v.MrbValue(m)
+	mrbSelf := self.MrbValue(m)
+
+	proc := C._go_mrb_proc_ptr(mrbV.value)
+	value := C.mrb_run(m.state, proc, mrbSelf.value)
 	if m.state.exc != nil {
 		return nil, newExceptionValue(m.state)
 	}
