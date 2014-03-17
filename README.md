@@ -5,6 +5,10 @@ go-mruby provides [mruby](https://github.com/mruby/mruby) bindings for
 embedded Ruby VM. Using the mruby library, Go applications can call Ruby
 code, and Ruby code can call Go code (that is properly exposed)!
 
+At the time of writing, this is the most comprehensive mruby library for
+Go _by far_. It is also the only mruby library for Go that enables exposing
+Go functions to Ruby. Our goal is to implement all of the mruby API.
+
 **Warning:** This is still under active development. As such, there is no
 promise of API compatibility. But the library is actually very usable,
 well tested, and well documented.
