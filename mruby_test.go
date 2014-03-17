@@ -186,6 +186,19 @@ func TestMrbGetArgs(t *testing.T) {
 			[]ValueType{TypeProc},
 			nil,
 		},
+
+		{
+			`(Hello, "bar", true)`,
+			[]ValueType{TypeClass, TypeString, TypeTrue},
+			[]string{`Hello`, `"bar"`, "true"},
+		},
+
+
+		{
+			`("bar", true) {}`,
+			[]ValueType{TypeString, TypeTrue, TypeProc},
+			nil,
+		},
 	}
 
 	for _, tc := range cases {
