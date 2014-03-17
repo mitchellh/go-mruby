@@ -283,3 +283,27 @@ func TestMrbLoadString_twice(t *testing.T) {
 		t.Fatalf("bad: %s", value)
 	}
 }
+
+func TestMrbYield(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	cb := func(m *Mrb, self *MrbValue) Value {
+		result, err := m.Yield(m.GetArgs()[0], Int(12), Int(30))
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		return result
+	}
+
+	class := mrb.DefineClass("Hello", mrb.ObjectClass())
+	class.DefineClassMethod("foo", cb, ArgsBlock())
+	value, err := mrb.LoadString(`Hello.foo { |a, b| a + b }`)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if value.Fixnum() != 42 {
+		t.Fatalf("bad: %s", value)
+	}
+}

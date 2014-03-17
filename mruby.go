@@ -174,6 +174,36 @@ func (m *Mrb) Run(v Value, self Value) (*MrbValue, error) {
 	return newValue(m.state, value), nil
 }
 
+// Yield yields to a block with the given arguments.
+//
+// This should be called within the context of a Func.
+func (m *Mrb) Yield(block Value, args ...Value) (*MrbValue, error) {
+	mrbBlock := block.MrbValue(m)
+
+	var argv []C.mrb_value = nil
+	var argvPtr *C.mrb_value = nil
+	if len(args) > 0 {
+		// Make the raw byte slice to hold our arguments we'll pass to C
+		argv = make([]C.mrb_value, len(args))
+		for i, arg := range args {
+			argv[i] = arg.MrbValue(m).value
+		}
+
+		argvPtr = &argv[0]
+	}
+
+	result := C.mrb_yield_argv(
+		m.state,
+		mrbBlock.value,
+		C.int(len(argv)),
+		argvPtr)
+	if m.state.exc != nil {
+		return nil, newExceptionValue(m.state)
+	}
+
+	return newValue(m.state, result), nil
+}
+
 //-------------------------------------------------------------------
 // Functions handling defining new classes/modules in the VM
 //-------------------------------------------------------------------
