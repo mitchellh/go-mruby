@@ -18,6 +18,21 @@ func TestClassDefineClassMethod(t *testing.T) {
 	testCallbackResult(t, value)
 }
 
+func TestClassDefineConst(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	class := mrb.DefineClass("Hello", mrb.ObjectClass())
+	class.DefineConst("FOO", String("bar"))
+	value, err := mrb.LoadString("Hello::FOO")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if value.String() != "bar" {
+		t.Fatalf("bad: %s", value)
+	}
+}
+
 func TestClassDefineMethod(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()

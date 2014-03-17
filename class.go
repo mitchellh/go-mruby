@@ -24,6 +24,12 @@ func (c *Class) DefineClassMethod(name string, cb Func, as ArgSpec) {
 		C.mrb_aspec(as))
 }
 
+// DefineConst defines a constant within this class.
+func (c *Class) DefineConst(name string, value Value) {
+	C.mrb_define_const(
+		c.mrb.state, c.class, C.CString(name), value.MrbValue(c.mrb).value)
+}
+
 // DefineMethod defines an instance method on the class.
 func (c *Class) DefineMethod(name string, cb Func, as ArgSpec) {
 	insertMethod(c.mrb.state, c.class, name, cb)
