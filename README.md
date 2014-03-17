@@ -9,9 +9,10 @@ At the time of writing, this is the most comprehensive mruby library for
 Go _by far_. It is also the only mruby library for Go that enables exposing
 Go functions to Ruby. Our goal is to implement all of the mruby API.
 
-**Warning:** This is still under active development. As such, there is no
-promise of API compatibility. But the library is actually very usable,
-well tested, and well documented.
+**Project Status:** The major portions of the mruby API are implemented,
+but the mruby API is huge. If there is something that is missing, please
+issue a pull request and I'd be happy to add it! We're also not yet ready
+to promise API backwards compatibility on a Go-level, but we're getting there.
 
 ## Installation
 
