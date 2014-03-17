@@ -74,6 +74,16 @@ func (m *Mrb) Class(name string, super *Class) *Class {
 	return newClass(m, class)
 }
 
+// Close a Mrb, this must be called to properly free resources, and
+// should only be called once.
+func (m *Mrb) Close() {
+	// Delete all the methods from the state
+	delete(stateMethodTable, m.state)
+
+	// Close the state
+	C.mrb_close(m.state)
+}
+
 // ConstDefined checks if the given constant is defined in the scope.
 //
 // This should be used, for example, before a call to Class, because a
@@ -162,16 +172,6 @@ func (m *Mrb) Run(v Value, self Value) (*MrbValue, error) {
 	}
 
 	return newValue(m.state, value), nil
-}
-
-// Close a Mrb, this must be called to properly free resources, and
-// should only be called once.
-func (m *Mrb) Close() {
-	// Delete all the methods from the state
-	delete(stateMethodTable, m.state)
-
-	// Close the state
-	C.mrb_close(m.state)
 }
 
 //-------------------------------------------------------------------
