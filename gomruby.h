@@ -61,6 +61,23 @@ static inline int _go_mrb_get_args_all(mrb_state *s) {
 }
 
 //-------------------------------------------------------------------
+// Misc. helpers
+//-------------------------------------------------------------------
+
+// This is used to help calculate the "send" value for the parser,
+// since pointer arithmetic like this is hard in Go.
+static inline const char *_go_mrb_calc_send(const char *s) {
+    return s + strlen(s);
+}
+
+// Sets the capture_errors field on mrb_parser_state. Go can't access bit
+// fields.
+static inline void
+_go_mrb_parser_set_capture_errors(struct mrb_parser_state *p, mrb_bool v) {
+    p->capture_errors = v;
+}
+
+//-------------------------------------------------------------------
 // Functions below here expose defines or inline functions that were
 // otherwise inaccessible to Go directly.
 //-------------------------------------------------------------------
@@ -95,6 +112,10 @@ static inline int _go_mrb_fixnum(mrb_value o) {
 
 static inline short _go_mrb_is_dead(mrb_state *s, mrb_value o) {
     return is_dead(s, mrb_obj_ptr(o));
+}
+
+static inline struct RProc *_go_mrb_proc_ptr(mrb_value o) {
+    return mrb_proc_ptr(o);
 }
 
 static inline enum mrb_vtype _go_mrb_type(mrb_value o) {

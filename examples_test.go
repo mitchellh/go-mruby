@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func ExampleCustomFunction() {
+func Example_CustomFunction() {
 	mrb := NewMrb()
 	defer mrb.Close()
 
@@ -27,4 +27,9 @@ func ExampleCustomFunction() {
 	fmt.Printf("Result: %s\n", result.String())
 	// Output:
 	// Result: 42
+}
+
+func Example_LoadFiles() {
+	mrb := NewMrb()
+	defer mrb.Close()
 }

@@ -141,6 +141,24 @@ func (m *Mrb) LoadString(code string) (*MrbValue, error) {
 	return newValue(m.state, value), nil
 }
 
+// Run executes the given value, which should be a proc type.
+//
+// If you're looking to execute code directly a string, look at LoadString.
+//
+// If self is nil, it is set to the top-level self.
+func (m *Mrb) Run(v *MrbValue, self *MrbValue) (*MrbValue, error) {
+	if self == nil {
+		self = m.TopSelf()
+	}
+
+	value := C.mrb_run(m.state, C._go_mrb_proc_ptr(v.value), self.value)
+	if m.state.exc != nil {
+		return nil, newExceptionValue(m.state)
+	}
+
+	return newValue(m.state, value), nil
+}
+
 // Close a Mrb, this must be called to properly free resources, and
 // should only be called once.
 func (m *Mrb) Close() {
