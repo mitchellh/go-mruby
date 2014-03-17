@@ -29,7 +29,7 @@ func Example_CustomFunction() {
 	// Result: 42
 }
 
-func Example_LoadFiles() {
+func Example_SimulateFiles() {
 	mrb := NewMrb()
 	defer mrb.Close()
 
