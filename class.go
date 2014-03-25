@@ -2,6 +2,7 @@ package mruby
 
 import "unsafe"
 
+// #include <stdlib.h>
 // #include "gomruby.h"
 import "C"
 
@@ -16,28 +17,37 @@ type Class struct {
 func (c *Class) DefineClassMethod(name string, cb Func, as ArgSpec) {
 	insertMethod(c.mrb.state, c.class.c, name, cb)
 
+	cs := C.CString(name)
+	defer C.free(unsafe.Pointer(cs))
+
 	C.mrb_define_class_method(
 		c.mrb.state,
 		c.class,
-		C.CString(name),
+		cs,
 		C._go_mrb_func_t(),
 		C.mrb_aspec(as))
 }
 
 // DefineConst defines a constant within this class.
 func (c *Class) DefineConst(name string, value Value) {
+	cs := C.CString(name)
+	defer C.free(unsafe.Pointer(cs))
+
 	C.mrb_define_const(
-		c.mrb.state, c.class, C.CString(name), value.MrbValue(c.mrb).value)
+		c.mrb.state, c.class, cs, value.MrbValue(c.mrb).value)
 }
 
 // DefineMethod defines an instance method on the class.
 func (c *Class) DefineMethod(name string, cb Func, as ArgSpec) {
 	insertMethod(c.mrb.state, c.class, name, cb)
 
+	cs := C.CString(name)
+	defer C.free(unsafe.Pointer(cs))
+
 	C.mrb_define_method(
 		c.mrb.state,
 		c.class,
-		C.CString(name),
+		cs,
 		C._go_mrb_func_t(),
 		C.mrb_aspec(as))
 }

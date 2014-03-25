@@ -4,6 +4,7 @@ import "unsafe"
 
 // #cgo CFLAGS: -Ivendor/mruby/include
 // #cgo LDFLAGS: -lm libmruby.a
+// #include <stdlib.h>
 // #include "gomruby.h"
 import "C"
 
@@ -66,11 +67,14 @@ func (m *Mrb) ArenaSave() ArenaIndex {
 //
 // super can be nil, in which case the Object class will be used.
 func (m *Mrb) Class(name string, super *Class) *Class {
+	cs := C.CString(name)
+	defer C.free(unsafe.Pointer(cs))
+
 	var class *C.struct_RClass
 	if super == nil {
-		class = C.mrb_class_get(m.state, C.CString(name))
+		class = C.mrb_class_get(m.state, cs)
 	} else {
-		class = C.mrb_class_get_under(m.state, super.class, C.CString(name))
+		class = C.mrb_class_get_under(m.state, super.class, cs)
 	}
 
 	return newClass(m, class)
@@ -92,9 +96,12 @@ func (m *Mrb) Close() {
 // failure in Class will crash your program (by design). You can retrieve
 // the Value of a Class by calling Value().
 func (m *Mrb) ConstDefined(name string, scope Value) bool {
+	cs := C.CString(name)
+	defer C.free(unsafe.Pointer(cs))
+
 	scopeV := scope.MrbValue(m).value
 	b := C.mrb_const_defined(
-		m.state, scopeV, C.mrb_intern_cstr(m.state, C.CString(name)))
+		m.state, scopeV, C.mrb_intern_cstr(m.state, cs))
 	return C.ushort(b) != 0
 }
 
@@ -146,7 +153,10 @@ func (m *Mrb) IncrementalGC() {
 // LoadString loads the given code, executes it, and returns its final
 // value that it might return.
 func (m *Mrb) LoadString(code string) (*MrbValue, error) {
-	value := C.mrb_load_string(m.state, C.CString(code))
+	cs := C.CString(code)
+	defer C.free(unsafe.Pointer(cs))
+
+	value := C.mrb_load_string(m.state, cs)
 	if m.state.exc != nil {
 		return nil, newExceptionValue(m.state)
 	}
@@ -218,8 +228,11 @@ func (m *Mrb) DefineClass(name string, super *Class) *Class {
 		super = m.ObjectClass()
 	}
 
+	cs := C.CString(name)
+	defer C.free(unsafe.Pointer(cs))
+
 	return newClass(
-		m, C.mrb_define_class(m.state, C.CString(name), super.class))
+		m, C.mrb_define_class(m.state, cs, super.class))
 }
 
 // DefineClassUnder defines a new class under another class.
@@ -234,13 +247,18 @@ func (m *Mrb) DefineClassUnder(name string, super *Class, outer *Class) *Class {
 		outer = m.ObjectClass()
 	}
 
+	cs := C.CString(name)
+	defer C.free(unsafe.Pointer(cs))
+
 	return newClass(m, C.mrb_define_class_under(
-		m.state, outer.class, C.CString(name), super.class))
+		m.state, outer.class, cs, super.class))
 }
 
 // DefineModule defines a top-level module.
 func (m *Mrb) DefineModule(name string) *Class {
-	return newClass(m, C.mrb_define_module(m.state, C.CString(name)))
+	cs := C.CString(name)
+	defer C.free(unsafe.Pointer(cs))
+	return newClass(m, C.mrb_define_module(m.state, cs))
 }
 
 // DefineModuleUnder defines a module under another class/module.
@@ -249,8 +267,11 @@ func (m *Mrb) DefineModuleUnder(name string, outer *Class) *Class {
 		outer = m.ObjectClass()
 	}
 
+	cs := C.CString(name)
+	defer C.free(unsafe.Pointer(cs))
+
 	return newClass(m,
-		C.mrb_define_module_under(m.state, outer.class, C.CString(name)))
+		C.mrb_define_module_under(m.state, outer.class, cs))
 }
 
 //-------------------------------------------------------------------

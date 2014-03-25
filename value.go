@@ -4,6 +4,7 @@ import (
 	"unsafe"
 )
 
+// #include <stdlib.h>
 // #include "gomruby.h"
 import "C"
 
@@ -79,10 +80,13 @@ func (v *MrbValue) Call(method string, args ...Value) (*MrbValue, error) {
 		argvPtr = &argv[0]
 	}
 
+	cs := C.CString(method)
+	defer C.free(unsafe.Pointer(cs))
+
 	result := C.mrb_funcall_argv(
 		v.state,
 		v.value,
-		C.mrb_intern_cstr(v.state, C.CString(method)),
+		C.mrb_intern_cstr(v.state, cs),
 		C.int(len(argv)),
 		argvPtr)
 	if v.state.exc != nil {

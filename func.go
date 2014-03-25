@@ -2,8 +2,10 @@ package mruby
 
 import (
 	"fmt"
+	"unsafe"
 )
 
+// #include <stdlib.h>
 // #include "gomruby.h"
 import "C"
 
@@ -75,6 +77,9 @@ func insertMethod(s *C.mrb_state, c *C.struct_RClass, n string, f Func) {
 		classLookup[c] = methodLookup
 	}
 
-	sym := C.mrb_intern_cstr(s, C.CString(n))
+	cs := C.CString(n)
+	defer C.free(unsafe.Pointer(cs))
+
+	sym := C.mrb_intern_cstr(s, cs)
 	methodLookup[sym] = f
 }

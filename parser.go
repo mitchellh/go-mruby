@@ -6,6 +6,7 @@ import (
 	"unsafe"
 )
 
+// #include <stdlib.h>
 // #include "gomruby.h"
 import "C"
 
