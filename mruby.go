@@ -315,5 +315,7 @@ func (m *Mrb) FixnumValue(v int) *MrbValue {
 
 // Returns a Value for a string.
 func (m *Mrb) StringValue(s string) *MrbValue {
-	return newValue(m.state, C.mrb_str_new_cstr(m.state, C.CString(s)))
+	cs := C.CString(s)
+	defer C.free(unsafe.Pointer(cs))
+	return newValue(m.state, C.mrb_str_new_cstr(m.state, cs))
 }
