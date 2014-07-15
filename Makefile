@@ -1,7 +1,7 @@
 MRUBY_COMMIT ?= 1.0.0
 
 all: libmruby.a
-	go test
+	go test -tags lmruby
 
 clean:
 	rm -rf vendor
