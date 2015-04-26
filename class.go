@@ -72,7 +72,7 @@ func (c *Class) New(args ...Value) (*MrbValue, error) {
 		argvPtr = &argv[0]
 	}
 
-	result := C.mrb_obj_new(c.mrb.state, c.class, C.int(len(argv)), argvPtr)
+	result := C.mrb_obj_new(c.mrb.state, c.class, C.mrb_int(len(argv)), argvPtr)
 	if c.mrb.state.exc != nil {
 		return nil, newExceptionValue(c.mrb.state)
 	}

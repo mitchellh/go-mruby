@@ -31,7 +31,7 @@ $ make
 
 This will download mruby, compile it, and run the tests for go-mruby,
 verifying that your build is functional. By default, go-mruby will download
-and build version 1.0.0 of mruby, but this is customizable.
+and build version 1.1.0 of mruby, but this is customizable.
 
 Compiling/installing the go-mruby library should work on Linux, Mac OS X,
 and Windows. On Windows, msys is the only supported build toolchain (same
@@ -43,7 +43,7 @@ You can customize the mruby compilation by setting a couple environmental
 variables prior to calling `make`:
 
   * `MRUBY_COMMIT` is the git ref that will be checked out for mruby. This
-    defaults to "1.0.0" currently for version 1.0.0 of mruby. It is recommended
+    defaults to "1.1.0" currently for version 1.1.0 of mruby. It is recommended
     you explicitly set this to a version of mruby that works for you to avoid
     any changes in this library later.
 
