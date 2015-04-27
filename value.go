@@ -87,7 +87,7 @@ func (v *MrbValue) Call(method string, args ...Value) (*MrbValue, error) {
 		v.state,
 		v.value,
 		C.mrb_intern_cstr(v.state, cs),
-		C.int(len(argv)),
+		C.mrb_int(len(argv)),
 		argvPtr)
 	if v.state.exc != nil {
 		return nil, newExceptionValue(v.state)
@@ -183,5 +183,3 @@ func newValue(s *C.mrb_state, v C.mrb_value) *MrbValue {
 		value: v,
 	}
 }
-
-

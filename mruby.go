@@ -207,7 +207,7 @@ func (m *Mrb) Yield(block Value, args ...Value) (*MrbValue, error) {
 	result := C.mrb_yield_argv(
 		m.state,
 		mrbBlock.value,
-		C.int(len(argv)),
+		C.mrb_int(len(argv)),
 		argvPtr)
 	if m.state.exc != nil {
 		return nil, newExceptionValue(m.state)
