@@ -16,12 +16,17 @@ to promise API backwards compatibility on a Go-level, but we're getting there.
 
 ## Installation
 
-Installation is a little trickier than a standard Go library, but not
-by much. You can't simply `go get` this library, unfortunately. This is
-because [mruby](https://github.com/mruby/mruby) must first be built. We
-don't ship a pre-built version of mruby because the build step of mruby
-is important in customizing what aspects of the standard library you want
-available, as well as any other extensions.
+If you have `mruby` already installed in your enviroment i.e. with `brew install
+mruby` you can simply `go get` this package.
+
+## Customizing Mruby
+
+Installation in this case is a little trickier than a standard Go library, but
+not by much. You can't simply `go get` this library, unfortunately. This is
+because [mruby](https://github.com/mruby/mruby) must first be built. We don't
+ship a pre-built version of mruby because the build step of mruby is important
+in customizing what aspects of the standard library you want available, as well
+as any other extensions.
 
 To build mruby, we've made it very easy:
 
@@ -36,8 +41,6 @@ and build version 1.1.0 of mruby, but this is customizable.
 Compiling/installing the go-mruby library should work on Linux, Mac OS X,
 and Windows. On Windows, msys is the only supported build toolchain (same
 as Go itself).
-
-### Customizing the mruby Compilation
 
 You can customize the mruby compilation by setting a couple environmental
 variables prior to calling `make`:

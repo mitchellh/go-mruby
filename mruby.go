@@ -2,8 +2,10 @@ package mruby
 
 import "unsafe"
 
-// #cgo CFLAGS: -Ivendor/mruby/include
-// #cgo LDFLAGS: -lm libmruby.a
+// #cgo !lmruby CFLAGS: -Imruby
+// #cgo !lmruby LDFLAGS: -lm -lmruby
+// #cgo lmruby CFLAGS: -Ivendor/mruby/include
+// #cgo lmruby LDFLAGS: -lm libmruby.a
 // #include <stdlib.h>
 // #include "gomruby.h"
 import "C"
