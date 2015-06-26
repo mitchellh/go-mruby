@@ -22,6 +22,32 @@ func TestMrbValueCall(t *testing.T) {
 	}
 }
 
+func TestMrbValueCallBlock(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	value, err := mrb.LoadString(`"foo"`)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	block, err := mrb.LoadString(`Proc.new { |_| "bar" }`)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	result, err := value.CallBlock("gsub", String("foo"), block)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if result.Type() != TypeString {
+		t.Fatalf("bad type")
+	}
+	if result.String() != "bar" {
+		t.Fatalf("bad: %s", result)
+	}
+}
+
 func TestMrbValueValue(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()

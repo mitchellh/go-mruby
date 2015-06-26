@@ -1,6 +1,7 @@
 package mruby
 
 import (
+	"fmt"
 	"unsafe"
 )
 
@@ -67,6 +68,22 @@ func init() {
 // Call calls a method with the given name and arguments on this
 // value.
 func (v *MrbValue) Call(method string, args ...Value) (*MrbValue, error) {
+	return v.call(method, args, nil)
+}
+
+// CallBlock is the same as call except that it expects the last
+// argument to be a Proc that will be passed into the function call.
+// It is an error if args is empty or if there is no block on the end.
+func (v *MrbValue) CallBlock(method string, args ...Value) (*MrbValue, error) {
+	if len(args) == 0 {
+		return nil, fmt.Errorf("args must be non-empty and have a proc at the end")
+	}
+
+	n := len(args)
+	return v.call(method, args[:n-1], args[n-1])
+}
+
+func (v *MrbValue) call(method string, args []Value, block Value) (*MrbValue, error) {
 	var argv []C.mrb_value = nil
 	var argvPtr *C.mrb_value = nil
 
@@ -80,15 +97,34 @@ func (v *MrbValue) Call(method string, args ...Value) (*MrbValue, error) {
 		argvPtr = &argv[0]
 	}
 
+	var blockV *C.mrb_value
+	if block != nil {
+		val := block.MrbValue(&Mrb{v.state}).value
+		blockV = &val
+	}
+
 	cs := C.CString(method)
 	defer C.free(unsafe.Pointer(cs))
 
-	result := C.mrb_funcall_argv(
-		v.state,
-		v.value,
-		C.mrb_intern_cstr(v.state, cs),
-		C.mrb_int(len(argv)),
-		argvPtr)
+	// If we have a block, we have to call a separate function to
+	// pass a block in. Otherwise, we just call it directly.
+	var result C.mrb_value
+	if blockV == nil {
+		result = C.mrb_funcall_argv(
+			v.state,
+			v.value,
+			C.mrb_intern_cstr(v.state, cs),
+			C.mrb_int(len(argv)),
+			argvPtr)
+	} else {
+		result = C.mrb_funcall_with_block(
+			v.state,
+			v.value,
+			C.mrb_intern_cstr(v.state, cs),
+			C.mrb_int(len(argv)),
+			argvPtr,
+			*blockV)
+	}
 	if v.state.exc != nil {
 		return nil, newExceptionValue(v.state)
 	}
