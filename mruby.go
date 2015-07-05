@@ -1,6 +1,9 @@
 package mruby
 
-import "unsafe"
+import (
+	"log"
+	"unsafe"
+)
 
 // #cgo CFLAGS: -Ivendor/mruby/include
 // #cgo LDFLAGS: libmruby.a -lm
@@ -24,6 +27,9 @@ type ArenaIndex int
 // When you're finished with the VM, clean up all resources it is using
 // by calling the Close method.
 func NewMrb() *Mrb {
+	log.Printf("[TRACE] NewMrb() start")
+	defer log.Printf("[TRACE] NewMrb() finish")
+
 	state := C.mrb_open()
 
 	return &Mrb{
@@ -36,6 +42,8 @@ func NewMrb() *Mrb {
 //
 // See ArenaSave for more documentation.
 func (m *Mrb) ArenaRestore(idx ArenaIndex) {
+	log.Printf("[TRACE] Mrb#ArenaRestore(%q) start", idx)
+	defer log.Printf("[TRACE] Mrb#ArenaRestore(%q) finish", idx)
 	C.mrb_gc_arena_restore(m.state, C.int(idx))
 }
 
@@ -58,6 +66,8 @@ func (m *Mrb) ArenaRestore(idx ArenaIndex) {
 // period of time, you might not have to worry about saving/restoring the
 // arena.
 func (m *Mrb) ArenaSave() ArenaIndex {
+	log.Printf("[TRACE] Mrb#ArenaSave() start")
+	defer log.Printf("[TRACE] Mrb#ArenaSave() finish")
 	return ArenaIndex(C.mrb_gc_arena_save(m.state))
 }
 
@@ -67,6 +77,9 @@ func (m *Mrb) ArenaSave() ArenaIndex {
 //
 // super can be nil, in which case the Object class will be used.
 func (m *Mrb) Class(name string, super *Class) *Class {
+	log.Printf("[TRACE] Mrb#Class(%q, %q) start", name, super)
+	defer log.Printf("[TRACE] Mrb#Class(%q, %q) finish", name, super)
+
 	cs := C.CString(name)
 	defer C.free(unsafe.Pointer(cs))
 
@@ -83,6 +96,9 @@ func (m *Mrb) Class(name string, super *Class) *Class {
 // Close a Mrb, this must be called to properly free resources, and
 // should only be called once.
 func (m *Mrb) Close() {
+	log.Printf("[TRACE] Mrb#Close() start")
+	defer log.Printf("[TRACE] Mrb#Close() finish")
+
 	// Delete all the methods from the state
 	delete(stateMethodTable, m.state)
 
@@ -96,6 +112,9 @@ func (m *Mrb) Close() {
 // failure in Class will crash your program (by design). You can retrieve
 // the Value of a Class by calling Value().
 func (m *Mrb) ConstDefined(name string, scope Value) bool {
+	log.Printf("[TRACE] Mrb#ConstDefined(%s, %s) start", name, scope)
+	defer log.Printf("[TRACE] Mrb#ConstDefined(%s, %s) finish", name, scope)
+
 	cs := C.CString(name)
 	defer C.free(unsafe.Pointer(cs))
 
@@ -107,12 +126,18 @@ func (m *Mrb) ConstDefined(name string, scope Value) bool {
 
 // FullGC executes a complete GC cycle on the VM.
 func (m *Mrb) FullGC() {
+	log.Printf("[TRACE] Mrb#FullGC() start")
+	defer log.Printf("[TRACE] Mrb#FullGC() finish")
+
 	C.mrb_full_gc(m.state)
 }
 
 // GetArgs returns all the arguments that were given to the currnetly
 // called function (currently on the stack).
 func (m *Mrb) GetArgs() []*MrbValue {
+	log.Printf("[TRACE] Mrb#GetArgs() start")
+	defer log.Printf("[TRACE] Mrb#GetArgs() finish")
+
 	getArgLock.Lock()
 	defer getArgLock.Unlock()
 
@@ -147,12 +172,18 @@ func (m *Mrb) GetArgs() []*MrbValue {
 // This function is best called periodically when executing Ruby in
 // the VM many times (thousands of times).
 func (m *Mrb) IncrementalGC() {
+	log.Printf("[TRACE] Mrb#IncrementalGC() start")
+	defer log.Printf("[TRACE] Mrb#IncrementalGC() finish")
+
 	C.mrb_incremental_gc(m.state)
 }
 
 // LoadString loads the given code, executes it, and returns its final
 // value that it might return.
 func (m *Mrb) LoadString(code string) (*MrbValue, error) {
+	log.Printf("[TRACE] Mrb#LoadString() start")
+	defer log.Printf("[TRACE] Mrb#LoadString() finish")
+
 	cs := C.CString(code)
 	defer C.free(unsafe.Pointer(cs))
 
@@ -170,6 +201,9 @@ func (m *Mrb) LoadString(code string) (*MrbValue, error) {
 //
 // If self is nil, it is set to the top-level self.
 func (m *Mrb) Run(v Value, self Value) (*MrbValue, error) {
+	log.Printf("[TRACE] Mrb#Run(%q, %q) start", v, self)
+	defer log.Printf("[TRACE] Mrb#Run(%q, %q) finish", v, self)
+
 	if self == nil {
 		self = m.TopSelf()
 	}
@@ -190,6 +224,9 @@ func (m *Mrb) Run(v Value, self Value) (*MrbValue, error) {
 //
 // This should be called within the context of a Func.
 func (m *Mrb) Yield(block Value, args ...Value) (*MrbValue, error) {
+	log.Printf("[TRACE] Mrb#Yield(%q, %q) start", block, args)
+	defer log.Printf("[TRACE] Mrb#Yield(%q, %q) finish", block, args)
+
 	mrbBlock := block.MrbValue(m)
 
 	var argv []C.mrb_value = nil
@@ -224,6 +261,9 @@ func (m *Mrb) Yield(block Value, args ...Value) (*MrbValue, error) {
 //
 // If super is nil, the class will be defined under Object.
 func (m *Mrb) DefineClass(name string, super *Class) *Class {
+	log.Printf("[TRACE] Mrb#DefineClass(%q, %q) start", name, super)
+	defer log.Printf("[TRACE] Mrb#DefineClass(%q, %q) finish", name, super)
+
 	if super == nil {
 		super = m.ObjectClass()
 	}
@@ -240,6 +280,9 @@ func (m *Mrb) DefineClass(name string, super *Class) *Class {
 // This is, for example, how you would define the World class in
 // `Hello::World` where Hello is the "outer" class.
 func (m *Mrb) DefineClassUnder(name string, super *Class, outer *Class) *Class {
+	log.Printf("[TRACE] Mrb#DefineClassUnder(%q, %q, %q) start", name, super, outer)
+	defer log.Printf("[TRACE] Mrb#DefineClassUnder(%q, %q, %q) finish", name, super, outer)
+
 	if super == nil {
 		super = m.ObjectClass()
 	}
@@ -256,6 +299,9 @@ func (m *Mrb) DefineClassUnder(name string, super *Class, outer *Class) *Class {
 
 // DefineModule defines a top-level module.
 func (m *Mrb) DefineModule(name string) *Class {
+	log.Printf("[TRACE] Mrb#DefineModule(%q) start", name)
+	defer log.Printf("[TRACE] Mrb#DefineModule(%q) finish", name)
+
 	cs := C.CString(name)
 	defer C.free(unsafe.Pointer(cs))
 	return newClass(m, C.mrb_define_module(m.state, cs))
@@ -263,6 +309,9 @@ func (m *Mrb) DefineModule(name string) *Class {
 
 // DefineModuleUnder defines a module under another class/module.
 func (m *Mrb) DefineModuleUnder(name string, outer *Class) *Class {
+	log.Printf("[TRACE] Mrb#DefineModuleUnder(%q, %q) start", name, outer)
+	defer log.Printf("[TRACE] Mrb#DefineModuleUnder(%q, %q) finish", name, outer)
+
 	if outer == nil {
 		outer = m.ObjectClass()
 	}
@@ -280,41 +329,57 @@ func (m *Mrb) DefineModuleUnder(name string, outer *Class) *Class {
 
 // Returns the Object top-level class.
 func (m *Mrb) ObjectClass() *Class {
+	log.Printf("[TRACE] Mrb#ObjectClass() start")
+	defer log.Printf("[TRACE] Mrb#ObjectClass() finish")
 	return newClass(m, m.state.object_class)
 }
 
 // Returns the Object top-level class.
 func (m *Mrb) KernelModule() *Class {
+	log.Printf("[TRACE] Mrb#KernelModule() start")
+	defer log.Printf("[TRACE] Mrb#KernelModule() finish")
 	return newClass(m, m.state.kernel_module)
 }
 
 // Returns the top-level `self` value.
 func (m *Mrb) TopSelf() *MrbValue {
+	log.Printf("[TRACE] Mrb#TopSelf() start")
+	defer log.Printf("[TRACE] Mrb#TopSelf() finish")
 	return newValue(m.state, C.mrb_obj_value(unsafe.Pointer(m.state.top_self)))
 }
 
 // Returns a Value for "false"
 func (m *Mrb) FalseValue() *MrbValue {
+	log.Printf("[TRACE] Mrb#FalseValue() start")
+	defer log.Printf("[TRACE] Mrb#FalseValue() finish")
 	return newValue(m.state, C.mrb_false_value())
 }
 
 // NilValue returns "nil"
 func (m *Mrb) NilValue() *MrbValue {
+	log.Printf("[TRACE] Mrb#NilValue() start")
+	defer log.Printf("[TRACE] Mrb#NilValue() finish")
 	return newValue(m.state, C.mrb_nil_value())
 }
 
 // Returns a Value for "true"
 func (m *Mrb) TrueValue() *MrbValue {
+	log.Printf("[TRACE] Mrb#TrueValue() start")
+	defer log.Printf("[TRACE] Mrb#TrueValue() finish")
 	return newValue(m.state, C.mrb_true_value())
 }
 
 // Returns a Value for a fixed number.
 func (m *Mrb) FixnumValue(v int) *MrbValue {
+	log.Printf("[TRACE] Mrb#FixnumValue() start")
+	defer log.Printf("[TRACE] Mrb#FixnumValue() finish")
 	return newValue(m.state, C.mrb_fixnum_value(C.mrb_int(v)))
 }
 
 // Returns a Value for a string.
 func (m *Mrb) StringValue(s string) *MrbValue {
+	log.Printf("[TRACE] Mrb#StringValue() start")
+	defer log.Printf("[TRACE] Mrb#StringValue() finish")
 	cs := C.CString(s)
 	defer C.free(unsafe.Pointer(cs))
 	return newValue(m.state, C.mrb_str_new_cstr(m.state, cs))

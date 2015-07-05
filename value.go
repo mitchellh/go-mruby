@@ -2,6 +2,7 @@ package mruby
 
 import (
 	"fmt"
+	"log"
 	"unsafe"
 )
 
@@ -68,6 +69,8 @@ func init() {
 // Call calls a method with the given name and arguments on this
 // value.
 func (v *MrbValue) Call(method string, args ...Value) (*MrbValue, error) {
+	log.Printf("[TRACE] MrbValue#Call(%q, %q) start", method, args)
+	defer log.Printf("[TRACE] MrbValue#Call(%q, %q) finish", method, args)
 	return v.call(method, args, nil)
 }
 
@@ -75,6 +78,9 @@ func (v *MrbValue) Call(method string, args ...Value) (*MrbValue, error) {
 // argument to be a Proc that will be passed into the function call.
 // It is an error if args is empty or if there is no block on the end.
 func (v *MrbValue) CallBlock(method string, args ...Value) (*MrbValue, error) {
+	log.Printf("[TRACE] MrbValue#CallBlock(%q, %q) start", method, args)
+	defer log.Printf("[TRACE] MrbValue#CallBlock(%q, %q) finish", method, args)
+
 	if len(args) == 0 {
 		return nil, fmt.Errorf("args must be non-empty and have a proc at the end")
 	}
@@ -134,22 +140,30 @@ func (v *MrbValue) call(method string, args []Value, block Value) (*MrbValue, er
 
 // IsDead tells you if an object has been collected by the GC or not.
 func (v *MrbValue) IsDead() bool {
+	log.Printf("[TRACE] MrbValue#IsDead() start")
+	defer log.Printf("[TRACE] MrbValue#IsDead() finish")
 	return C._go_mrb_is_dead(v.state, v.value) != 0
 }
 
 // MrbValue so that *MrbValue implements the "Value" interface.
 func (v *MrbValue) MrbValue(*Mrb) *MrbValue {
+	log.Printf("[TRACE] MrbValue#MrbValue() start")
+	defer log.Printf("[TRACE] MrbValue#MrbValue() finish")
 	return v
 }
 
 // SetProcTargetClass sets the target class where a proc will be executed
 // when this value is a proc.
 func (v *MrbValue) SetProcTargetClass(c *Class) {
+	log.Printf("[TRACE] MrbValue#SetProcTargetClass(%#v) start", c)
+	defer log.Printf("[TRACE] MrbValue#SetProcTargetClass(%#v) finish", c)
 	proc := C._go_mrb_proc_ptr(v.value)
 	proc.target_class = c.class
 }
 
 func (v *MrbValue) Type() ValueType {
+	log.Printf("[TRACE] MrbValue#Type() start")
+	defer log.Printf("[TRACE] MrbValue#Type() finish")
 	return ValueType(C._go_mrb_type(v.value))
 }
 
@@ -171,11 +185,15 @@ func (e *Exception) Error() string {
 // TypeFixnum. Calling this with any other type will result in undefined
 // behavior.
 func (v *MrbValue) Fixnum() int {
+	log.Printf("[TRACE] MrbValue#Fixnum() start")
+	defer log.Printf("[TRACE] MrbValue#Fixnum() finish")
 	return int(C._go_mrb_fixnum(v.value))
 }
 
 // String returns the "to_s" result of this value.
 func (v *MrbValue) String() string {
+	log.Printf("[TRACE] MrbValue#String() start")
+	defer log.Printf("[TRACE] MrbValue#String() finish")
 	value := C.mrb_obj_as_string(v.state, v.value)
 	result := C.GoString(C.mrb_string_value_ptr(v.state, value))
 	return result
@@ -186,14 +204,20 @@ func (v *MrbValue) String() string {
 //-------------------------------------------------------------------
 
 func (i Int) MrbValue(m *Mrb) *MrbValue {
+	log.Printf("[TRACE] Int#MrbValue() start")
+	defer log.Printf("[TRACE] Int#MrbValue() finish")
 	return m.FixnumValue(int(i))
 }
 
 func (NilType) MrbValue(m *Mrb) *MrbValue {
+	log.Printf("[TRACE] NilType#MrbValue() start")
+	defer log.Printf("[TRACE] NilType#MrbValue() finish")
 	return m.NilValue()
 }
 
 func (s String) MrbValue(m *Mrb) *MrbValue {
+	log.Printf("[TRACE] String#MrbValue() start")
+	defer log.Printf("[TRACE] String#MrbValue() finish")
 	return m.StringValue(string(s))
 }
 
