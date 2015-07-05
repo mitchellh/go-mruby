@@ -165,11 +165,15 @@ type Exception struct {
 }
 
 func (e *Exception) Error() string {
+	return e.String()
+}
+
+func (e *Exception) String() string {
 	if e.cachedString != "" {
 		return e.cachedString
 	}
 
-	return e.String()
+	return e.MrbValue.String()
 }
 
 //-------------------------------------------------------------------
