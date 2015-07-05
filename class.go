@@ -1,6 +1,9 @@
 package mruby
 
-import "unsafe"
+import (
+	"log"
+	"unsafe"
+)
 
 // #include <stdlib.h>
 // #include "gomruby.h"
@@ -15,6 +18,9 @@ type Class struct {
 
 // DefineClassMethod defines a class-level method on the given class.
 func (c *Class) DefineClassMethod(name string, cb Func, as ArgSpec) {
+	log.Printf("[TRACE] Class#DefineClassMethod(%q) start", name)
+	defer log.Printf("[TRACE] Class#DefineClassMethod(%q) finish", name)
+
 	insertMethod(c.mrb.state, c.class.c, name, cb)
 
 	cs := C.CString(name)
@@ -30,6 +36,9 @@ func (c *Class) DefineClassMethod(name string, cb Func, as ArgSpec) {
 
 // DefineConst defines a constant within this class.
 func (c *Class) DefineConst(name string, value Value) {
+	log.Printf("[TRACE] Class#DefineConst(%q, %q) start", name, value)
+	defer log.Printf("[TRACE] Class#DefineConst(%q, %q) finish", name, value)
+
 	cs := C.CString(name)
 	defer C.free(unsafe.Pointer(cs))
 
@@ -39,6 +48,9 @@ func (c *Class) DefineConst(name string, value Value) {
 
 // DefineMethod defines an instance method on the class.
 func (c *Class) DefineMethod(name string, cb Func, as ArgSpec) {
+	log.Printf("[TRACE] Class#DefineMethod(%q) start", name)
+	defer log.Printf("[TRACE] Class#DefineMethod(%q) finish", name)
+
 	insertMethod(c.mrb.state, c.class, name, cb)
 
 	cs := C.CString(name)
@@ -55,11 +67,17 @@ func (c *Class) DefineMethod(name string, cb Func, as ArgSpec) {
 // Value returns a *Value for this Class. *Values are sometimes required
 // as arguments where classes should be valid.
 func (c *Class) MrbValue(m *Mrb) *MrbValue {
+	log.Printf("[TRACE] Class#MrbValue(%#v) start", m)
+	defer log.Printf("[TRACE] Class#MrbValue(#%v) finish", m)
+
 	return newValue(c.mrb.state, C.mrb_obj_value(unsafe.Pointer(c.class)))
 }
 
 // Instantiate the class with the given args.
 func (c *Class) New(args ...Value) (*MrbValue, error) {
+	log.Printf("[TRACE] Class#New(%q) start", args)
+	defer log.Printf("[TRACE] Class#New(%q) finish", args)
+
 	var argv []C.mrb_value = nil
 	var argvPtr *C.mrb_value = nil
 	if len(args) > 0 {

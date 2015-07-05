@@ -2,6 +2,7 @@ package mruby
 
 import (
 	"fmt"
+	"log"
 	"unsafe"
 )
 
@@ -31,6 +32,9 @@ func init() {
 
 //export go_mrb_func_call
 func go_mrb_func_call(s *C.mrb_state, v *C.mrb_value, c_exc *C.mrb_value) *C.mrb_value {
+	log.Printf("[TRACE] go_mrb_func_call() start")
+	defer log.Printf("[TRACE] go_mrb_func_call() finish")
+
 	// Lookup the classes that we've registered methods for in this state
 	classTable := stateMethodTable[s]
 	if classTable == nil {
@@ -65,6 +69,9 @@ func go_mrb_func_call(s *C.mrb_state, v *C.mrb_value, c_exc *C.mrb_value) *C.mrb
 }
 
 func insertMethod(s *C.mrb_state, c *C.struct_RClass, n string, f Func) {
+	log.Printf("[TRACE] insertMethod() start")
+	defer log.Printf("[TRACE] insertMethod() finish")
+
 	classLookup := stateMethodTable[s]
 	if classLookup == nil {
 		classLookup = make(classMethodMap)

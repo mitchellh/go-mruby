@@ -3,6 +3,7 @@ package mruby
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"unsafe"
 )
 
@@ -12,7 +13,7 @@ import "C"
 
 // Parser is a parser for Ruby code.
 type Parser struct {
-	code string
+	code   string
 	mrb    *Mrb
 	parser *C.struct_mrb_parser_state
 }
@@ -21,6 +22,9 @@ type Parser struct {
 //
 // Make sure to Close the parser when you're done with it.
 func NewParser(m *Mrb) *Parser {
+	log.Printf("[TRACE] NewParser(%#v) start", m)
+	defer log.Printf("[TRACE] NewParser(%#v) finish", m)
+
 	p := C.mrb_parser_new(m.state)
 
 	// Set capture_errors to true so we don't go just printing things
@@ -35,6 +39,9 @@ func NewParser(m *Mrb) *Parser {
 
 // Close releases any resources associated with the parser.
 func (p *Parser) Close() {
+	log.Printf("[TRACE] Parser#Close() start")
+	defer log.Printf("[TRACE] Parser#Close() finish")
+
 	C.mrb_parser_free(p.parser)
 
 	// Empty out the code so the other string can get GCd
@@ -44,6 +51,9 @@ func (p *Parser) Close() {
 // GenerateCode takes all the internal parser state and generates
 // executable Ruby code, returning the callable proc.
 func (p *Parser) GenerateCode() *MrbValue {
+	log.Printf("[TRACE] Parser#GenerateCode() start")
+	defer log.Printf("[TRACE] Parser#GenerateCode() finish")
+
 	proc := C.mrb_generate_code(p.mrb.state, p.parser)
 	return newValue(p.mrb.state, C.mrb_obj_value(unsafe.Pointer(proc)))
 }
@@ -53,6 +63,9 @@ func (p *Parser) GenerateCode() *MrbValue {
 //
 // The CompileContext can be nil to not set a context.
 func (p *Parser) Parse(code string, c *CompileContext) ([]*ParserMessage, error) {
+	log.Printf("[TRACE] Parser#Parse(%q, %#v) start", code, c)
+	defer log.Printf("[TRACE] Parser#Parse(%q, %#v) finish", code, c)
+
 	// We set p.code so that the string doesn't get garbage collected
 	var s *C.char = C.CString(code)
 	p.code = code
