@@ -157,9 +157,18 @@ func (v *MrbValue) Type() ValueType {
 // and implements the Error interface.
 type Exception struct {
 	*MrbValue
+
+	// A cache of the string value of the exception. This is set in
+	// newExceptionValue so that the exception error string doesn't rely
+	// on the mruby state being available.
+	cachedString string
 }
 
 func (e *Exception) Error() string {
+	if e.cachedString != "" {
+		return e.cachedString
+	}
+
 	return e.String()
 }
 
@@ -210,7 +219,7 @@ func newExceptionValue(s *C.mrb_state) *Exception {
 	value := C.mrb_obj_value(unsafe.Pointer(s.exc))
 
 	result := newValue(s, value)
-	return &Exception{MrbValue: result}
+	return &Exception{MrbValue: result, cachedString: result.String()}
 }
 
 func newValue(s *C.mrb_state, v C.mrb_value) *MrbValue {

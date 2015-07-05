@@ -4,6 +4,15 @@ import (
 	"testing"
 )
 
+func TestExceptionString_afterClose(t *testing.T) {
+	mrb := NewMrb()
+	_, err := mrb.LoadString(`clearly a syntax error`)
+	mrb.Close()
+
+	// This panics before the bug fix that this test tests
+	err.Error()
+}
+
 func TestMrbValueCall(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
