@@ -187,6 +187,14 @@ func (v *MrbValue) Fixnum() int {
 	return int(C._go_mrb_fixnum(v.value))
 }
 
+// Hash returns the Hash value of this value. If the Type of the MrbValue
+// is not a ValueTypeHash, then this will panic. If the MrbValue has a
+// `to_h` function, you must call that manually prior to calling this
+// method.
+func (v *MrbValue) Hash() *Hash {
+	return &Hash{v}
+}
+
 // String returns the "to_s" result of this value.
 func (v *MrbValue) String() string {
 	value := C.mrb_obj_as_string(v.state, v.value)
