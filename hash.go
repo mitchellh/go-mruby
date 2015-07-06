@@ -20,3 +20,16 @@ func (h *Hash) Get(key Value) (*MrbValue, error) {
 
 	return newValue(h.state, result), nil
 }
+
+// Set sets a value on the hash
+func (h *Hash) Set(key, val Value) error {
+	keyVal := key.MrbValue(&Mrb{h.state}).value
+	valVal := val.MrbValue(&Mrb{h.state}).value
+
+	C.mrb_hash_set(h.state, h.value, keyVal, valVal)
+	if h.state.exc != nil {
+		return newExceptionValue(h.state)
+	}
+
+	return nil
+}
