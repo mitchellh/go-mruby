@@ -33,3 +33,15 @@ func (h *Hash) Set(key, val Value) error {
 
 	return nil
 }
+
+// Keys returns the array of keys that the Hash has. This is returned
+// as an *MrbValue since this is a Ruby array. You can iterate over it as
+// you see fit.
+func (h *Hash) Keys() (*MrbValue, error) {
+	result := C.mrb_hash_keys(h.state, h.value)
+	if h.state.exc != nil {
+		return nil, newExceptionValue(h.state)
+	}
+
+	return newValue(h.state, result), nil
+}

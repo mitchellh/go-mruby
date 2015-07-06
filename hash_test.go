@@ -36,4 +36,16 @@ func TestHash(t *testing.T) {
 	if value.String() != "baz" {
 		t.Fatalf("bad: %s", value)
 	}
+
+	// Keys
+	value, err = h.Keys()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if value.Type() != TypeArray {
+		t.Fatalf("bad: %s", value.Type())
+	}
+	if value.String() != `["foo"]` {
+		t.Fatalf("bad: %s", value)
+	}
 }
