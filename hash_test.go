@@ -48,4 +48,30 @@ func TestHash(t *testing.T) {
 	if value.String() != `["foo"]` {
 		t.Fatalf("bad: %s", value)
 	}
+
+	// Delete
+	value, err = h.Delete(String("foo"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if value.String() != "baz" {
+		t.Fatalf("bad: %s", value)
+	}
+
+	value, err = h.Keys()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if value.String() != `[]` {
+		t.Fatalf("bad: %s", value)
+	}
+
+	// Delete non-existing
+	value, err = h.Delete(String("nope"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if value != nil {
+		t.Fatalf("bad: %s", value)
+	}
 }

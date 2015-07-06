@@ -10,6 +10,23 @@ type Hash struct {
 	*MrbValue
 }
 
+// Delete deletes a key from the hash, returning its existing value,
+// or nil if there wasn't a value.
+func (h *Hash) Delete(key Value) (*MrbValue, error) {
+	keyVal := key.MrbValue(&Mrb{h.state}).value
+	result := C.mrb_hash_delete_key(h.state, h.value, keyVal)
+	if h.state.exc != nil {
+		return nil, newExceptionValue(h.state)
+	}
+
+	val := newValue(h.state, result)
+	if val.Type() == TypeFalse {
+		val = nil
+	}
+
+	return val, nil
+}
+
 // Get reads a value from the hash.
 func (h *Hash) Get(key Value) (*MrbValue, error) {
 	keyVal := key.MrbValue(&Mrb{h.state}).value
