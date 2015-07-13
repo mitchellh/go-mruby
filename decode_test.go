@@ -10,6 +10,7 @@ func TestDecode(t *testing.T) {
 	var outFloat64 float64
 	var outInt int
 	var outMap, outMap2 map[string]string
+	var outPtrInt *int
 	var outSlice []string
 	var outString string
 
@@ -71,6 +72,13 @@ func TestDecode(t *testing.T) {
 			[]string{"foo", "bar"},
 		},
 
+		// Ptr
+		{
+			`32`,
+			&outPtrInt,
+			32,
+		},
+
 		// String
 		{
 			`32`,
@@ -99,7 +107,11 @@ func TestDecode(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 
-		actual := reflect.Indirect(reflect.ValueOf(tc.Output)).Interface()
+		val := reflect.ValueOf(tc.Output)
+		for val.Kind() == reflect.Ptr {
+			val = reflect.Indirect(val)
+		}
+		actual := val.Interface()
 		if !reflect.DeepEqual(actual, tc.Expected) {
 			t.Fatalf("bad: %#v\n\n%#v", actual, tc.Expected)
 		}

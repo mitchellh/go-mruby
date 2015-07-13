@@ -55,6 +55,8 @@ func (d *decoder) decode(name string, v *MrbValue, result reflect.Value) error {
 		return d.decodeInt(name, v, result)
 	case reflect.Map:
 		return d.decodeMap(name, v, result)
+	case reflect.Ptr:
+		return d.decodePtr(name, v, result)
 	case reflect.Slice:
 		return d.decodeSlice(name, v, result)
 	case reflect.String:
@@ -183,6 +185,20 @@ func (d *decoder) decodeMap(name string, v *MrbValue, result reflect.Value) erro
 
 	// Set the final map if we can
 	set.Set(resultMap)
+	return nil
+}
+
+func (d *decoder) decodePtr(name string, v *MrbValue, result reflect.Value) error {
+	// Create an element of the concrete (non pointer) type and decode
+	// into that. Then set the value of the pointer to this type.
+	resultType := result.Type()
+	resultElemType := resultType.Elem()
+	val := reflect.New(resultElemType)
+	if err := d.decode(name, v, reflect.Indirect(val)); err != nil {
+		return err
+	}
+
+	result.Set(val)
 	return nil
 }
 
