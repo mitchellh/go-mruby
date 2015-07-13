@@ -8,6 +8,7 @@
 #define _GOMRUBY_H_INCLUDED
 
 #include <mruby.h>
+#include <mruby/array.h>
 #include <mruby/class.h>
 #include <mruby/compile.h>
 #include <mruby/irep.h>
@@ -117,6 +118,10 @@ static inline mrb_aspec _go_MRB_ARGS_OPT(int n) {
 
 static inline mrb_aspec _go_MRB_ARGS_REQ(int n) {
     return MRB_ARGS_REQ(n);
+}
+
+static inline float _go_mrb_float(mrb_value o) {
+    return mrb_float(o);
 }
 
 static inline int _go_mrb_fixnum(mrb_value o) {

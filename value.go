@@ -180,11 +180,26 @@ func (e *Exception) String() string {
 // Type conversions to Go types
 //-------------------------------------------------------------------
 
+// Array returns the Array value of this value. If the Type of the MrbValue
+// is not a TypeArray, then this will panic. If the MrbValue has a
+// `to_a` function, you must call that manually prior to calling this
+// method.
+func (v *MrbValue) Array() *Array {
+	return &Array{v}
+}
+
 // Fixnum returns the numeric value of this object if the Type() is
 // TypeFixnum. Calling this with any other type will result in undefined
 // behavior.
 func (v *MrbValue) Fixnum() int {
 	return int(C._go_mrb_fixnum(v.value))
+}
+
+// Float returns the numeric value of this object if the Type() is
+// TypeFloat. Calling this with any other type will result in undefined
+// behavior.
+func (v *MrbValue) Float() float64 {
+	return float64(C._go_mrb_float(v.value))
 }
 
 // Hash returns the Hash value of this value. If the Type of the MrbValue
