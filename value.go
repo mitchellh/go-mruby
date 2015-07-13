@@ -142,6 +142,11 @@ func (v *MrbValue) MrbValue(*Mrb) *MrbValue {
 	return v
 }
 
+// Mrb returns the Mrb state for this value.
+func (v *MrbValue) Mrb() *Mrb {
+	return &Mrb{v.state}
+}
+
 // SetProcTargetClass sets the target class where a proc will be executed
 // when this value is a proc.
 func (v *MrbValue) SetProcTargetClass(c *Class) {
