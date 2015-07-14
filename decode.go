@@ -39,7 +39,7 @@ const tagName = "mruby"
 // Note that with structs you can use the `mruby` tag to specify the
 // Hash key or method name to call. Example:
 //
-//    type Foo struct P
+//    type Foo struct {
 //        Field string `mruby:"read_field"`
 //    }
 //
