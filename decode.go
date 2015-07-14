@@ -67,6 +67,9 @@ func (d *decoder) decode(name string, v *MrbValue, result reflect.Value) error {
 		return d.decodeFloat(name, v, result)
 	case reflect.Int:
 		return d.decodeInt(name, v, result)
+	case reflect.Interface:
+		// When we see an interface, we make our own thing
+		return d.decodeInterface(name, v, result)
 	case reflect.Map:
 		return d.decodeMap(name, v, result)
 	case reflect.Ptr:
@@ -122,6 +125,60 @@ func (d *decoder) decodeInt(name string, v *MrbValue, result reflect.Value) erro
 		result.SetInt(int64(v))
 	default:
 		return fmt.Errorf("%s: unknown type %v", name, t)
+	}
+
+	return nil
+}
+
+func (d *decoder) decodeInterface(name string, v *MrbValue, result reflect.Value) error {
+	var set reflect.Value
+	redecode := true
+
+	switch t := v.Type(); t {
+	case TypeHash:
+		var temp map[string]interface{}
+		tempVal := reflect.ValueOf(temp)
+		result := reflect.MakeMap(
+			reflect.MapOf(
+				reflect.TypeOf(""),
+				tempVal.Type().Elem()))
+
+		set = result
+	case TypeArray:
+		var temp []interface{}
+		tempVal := reflect.ValueOf(temp)
+		result := reflect.MakeSlice(
+			reflect.SliceOf(tempVal.Type().Elem()), 0, 0)
+		set = result
+	case TypeFalse:
+		fallthrough
+	case TypeTrue:
+		var result bool
+		set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
+	case TypeFixnum:
+		var result int
+		set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
+	case TypeFloat:
+		var result float64
+		set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
+	case TypeString:
+		set = reflect.Indirect(reflect.New(reflect.TypeOf("")))
+	default:
+		return fmt.Errorf(
+			"%s: cannot decode into interface: %s",
+			name, t)
+	}
+
+	// Set the result to what its supposed to be, then reset
+	// result so we don't reflect into this method anymore.
+	result.Set(set)
+
+	if redecode {
+		// Revisit the node so that we can use the newly instantiated
+		// thing and populate it.
+		if err := d.decode(name, v, result); err != nil {
+			return err
+		}
 	}
 
 	return nil

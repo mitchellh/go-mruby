@@ -137,6 +137,79 @@ func TestDecode(t *testing.T) {
 	}
 }
 
+func TestDecodeInterface(t *testing.T) {
+	cases := []struct {
+		Input    string
+		Expected interface{}
+	}{
+		// Booleans
+		{
+			"true",
+			true,
+		},
+
+		{
+			"false",
+			false,
+		},
+
+		// Float
+		{
+			"1.2",
+			float64(1.2000000476837158),
+		},
+
+		// Int
+		{
+			"32",
+			int(32),
+		},
+
+		// Map
+		{
+			`{"foo" => "bar"}`,
+			map[string]interface{}{"foo": "bar"},
+		},
+
+		{
+			`{32 => "bar"}`,
+			map[string]interface{}{"32": "bar"},
+		},
+
+		// Slice
+		{
+			`["foo", "bar"]`,
+			[]interface{}{"foo", "bar"},
+		},
+
+		// String
+		{
+			`"32"`,
+			"32",
+		},
+	}
+
+	for _, tc := range cases {
+		mrb := NewMrb()
+		value, err := mrb.LoadString(tc.Input)
+		if err != nil {
+			mrb.Close()
+			t.Fatalf("err: %s\n\n%s", err, tc.Input)
+		}
+
+		var result interface{}
+		err = Decode(&result, value)
+		mrb.Close()
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		if !reflect.DeepEqual(result, tc.Expected) {
+			t.Fatalf("bad: \n\n%s\n\n%#v\n\n%#v", tc.Input, result, tc.Expected)
+		}
+	}
+}
+
 const testDecodeObjectMethods = `
 class Foo
 	def foo
