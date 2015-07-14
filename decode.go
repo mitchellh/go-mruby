@@ -14,6 +14,9 @@ const tagName = "mruby"
 
 // Decode converts the Ruby value to a Go value.
 //
+// The Decode process may call Ruby code and may generate Ruby garbage,
+// but it collects all of its own garbage. You don't need to GC around this.
+//
 // NOTE: This is still a work-in-progress. The API shouldn't change, but
 // the documentation won't be fleshed out until this is working really well.
 // Please see the tests (in decode_test.go) for examples of how this works.
@@ -285,6 +288,8 @@ func (d *decoder) decodeStruct(name string, v *MrbValue, result reflect.Value) e
 	switch t := v.Type(); t {
 	case TypeHash:
 		get = decodeStructHashGetter(mrb, v.Hash())
+	case TypeObject:
+		get = decodeStructObjectMethods(mrb, v)
 	default:
 		return fmt.Errorf("%s: not an object type for struct (%v)", name, t)
 	}
@@ -352,7 +357,7 @@ func (d *decoder) decodeStruct(name string, v *MrbValue, result reflect.Value) e
 			continue
 		}
 
-		fieldName := fieldType.Name
+		fieldName := strings.ToLower(fieldType.Name)
 
 		tagValue := fieldType.Tag.Get(tagName)
 		tagParts := strings.SplitN(tagValue, ",", 2)
@@ -410,7 +415,15 @@ func (d *decoder) decodeStruct(name string, v *MrbValue, result reflect.Value) e
 // a hash.
 func decodeStructHashGetter(mrb *Mrb, h *Hash) decodeStructGetter {
 	return func(key string) (*MrbValue, error) {
-		rbKey := mrb.StringValue(strings.ToLower(key))
+		rbKey := mrb.StringValue(key)
 		return h.Get(rbKey)
+	}
+}
+
+// decodeStructObjectMethods is a decodeStructGetter that reads values from
+// an object by calling methods.
+func decodeStructObjectMethods(mrb *Mrb, v *MrbValue) decodeStructGetter {
+	return func(key string) (*MrbValue, error) {
+		return v.Call(key)
 	}
 }
