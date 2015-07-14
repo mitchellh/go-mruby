@@ -7,7 +7,8 @@ code, and Ruby code can call Go code (that is properly exposed)!
 
 At the time of writing, this is the most comprehensive mruby library for
 Go _by far_. It is also the only mruby library for Go that enables exposing
-Go functions to Ruby. Our goal is to implement all of the mruby API.
+Go functions to Ruby as well as being able to generically convert complex
+Ruby types into Go types. Our goal is to implement all of the mruby API.
 
 **Project Status:** The major portions of the mruby API are implemented,
 but the mruby API is huge. If there is something that is missing, please
