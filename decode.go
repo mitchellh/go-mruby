@@ -17,9 +17,32 @@ const tagName = "mruby"
 // The Decode process may call Ruby code and may generate Ruby garbage,
 // but it collects all of its own garbage. You don't need to GC around this.
 //
-// NOTE: This is still a work-in-progress. The API shouldn't change, but
-// the documentation won't be fleshed out until this is working really well.
-// Please see the tests (in decode_test.go) for examples of how this works.
+// See the tests (decode_test.go) for detailed and specific examples of
+// how this function decodes. Basic examples are also available here and
+// in the README.
+//
+// For primitives, the decoding process is likely what you expect. For Ruby,
+// this is booleans, strings, fixnums, and floats. These map directly to
+// effectively equivalent Go types: bool, string, int, float64.
+// Hash and Arrays can map directly to maps and slices in Go, and Decode
+// will handle this as you expect.
+//
+// The only remaining data type in Go is a struct. A struct in Go can map
+// to any object in Ruby. If the data in Ruby is a hash, then the struct keys
+// will map directly to the hash keys. If the data in Ruby is an object, then
+// one of two things will be done. First: if the object responds to the
+// `to_gomruby` function, then this will be called and the resulting value
+// is expected to be a Hash and will be used to decode into the struct. If
+// the object does NOT respond to that function, then any struct fields will
+// invoke the corresponding Ruby method to attain the value.
+//
+// Note that with structs you can use the `mruby` tag to specify the
+// Hash key or method name to call. Example:
+//
+//    type Foo struct P
+//        Field string `mruby:"read_field"`
+//    }
+//
 func Decode(out interface{}, v *MrbValue) error {
 	// The out parameter must be a pointer since we must be
 	// able to write to it.
