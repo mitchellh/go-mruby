@@ -61,6 +61,11 @@ func go_mrb_func_call(s *C.mrb_state, v *C.mrb_value, c_exc *C.mrb_value) *C.mrb
 		return &mrb.NilValue().value
 	}
 
+	// If the result was a Go nil, convert it to a Ruby nil
+	if result == nil {
+		result = mrb.NilValue()
+	}
+
 	return &result.MrbValue(mrb).value
 }
 

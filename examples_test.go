@@ -29,6 +29,35 @@ func Example_CustomFunction() {
 	// Result: 42
 }
 
+func Example_Decode() {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	// Our custom function we'll expose to Ruby
+	var logData interface{}
+	logFunc := func(m *Mrb, self *MrbValue) (Value, Value) {
+		args := m.GetArgs()
+		if err := Decode(&logData, args[0]); err != nil {
+			panic(err)
+		}
+
+		return nil, nil
+	}
+
+	// Lets define a custom class and a class method we can call.
+	class := mrb.DefineClass("Example", nil)
+	class.DefineClassMethod("log", logFunc, ArgsReq(1))
+
+	// Let's call it and inspect the result
+	if _, err := mrb.LoadString(`Example.log({"foo" => "bar"})`); err != nil {
+		panic(err.Error())
+	}
+
+	fmt.Printf("Result: %v\n", logData)
+	// Output:
+	// Result: map[foo:bar]
+}
+
 func Example_SimulateFiles() {
 	mrb := NewMrb()
 	defer mrb.Close()
