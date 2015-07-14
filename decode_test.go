@@ -6,6 +6,10 @@ import (
 )
 
 func TestDecode(t *testing.T) {
+	type structString struct {
+		Foo string
+	}
+
 	var outBool bool
 	var outFloat64 float64
 	var outInt int
@@ -13,6 +17,7 @@ func TestDecode(t *testing.T) {
 	var outPtrInt *int
 	var outSlice []string
 	var outString string
+	var outStructString structString
 
 	cases := []struct {
 		Input    string
@@ -90,6 +95,13 @@ func TestDecode(t *testing.T) {
 			`"32"`,
 			&outString,
 			"32",
+		},
+
+		// Struct
+		{
+			`{"foo" => "bar"}`,
+			&outStructString,
+			structString{Foo: "bar"},
 		},
 	}
 

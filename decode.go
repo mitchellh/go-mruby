@@ -4,10 +4,19 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
+	"strings"
 )
 
+// This is the tag to use with structures to have settings for mruby
+const tagName = "mruby"
+
 // Decode converts the Ruby value to a Go value.
+//
+// NOTE: This is still a work-in-progress. The API shouldn't change, but
+// the documentation won't be fleshed out until this is working really well.
+// Please see the tests (in decode_test.go) for examples of how this works.
 func Decode(out interface{}, v *MrbValue) error {
 	// The out parameter must be a pointer since we must be
 	// able to write to it.
@@ -23,6 +32,8 @@ func Decode(out interface{}, v *MrbValue) error {
 type decoder struct {
 	stack []reflect.Kind
 }
+
+type decodeStructGetter func(string) (*MrbValue, error)
 
 func (d *decoder) decode(name string, v *MrbValue, result reflect.Value) error {
 	k := result
@@ -61,6 +72,8 @@ func (d *decoder) decode(name string, v *MrbValue, result reflect.Value) error {
 		return d.decodeSlice(name, v, result)
 	case reflect.String:
 		return d.decodeString(name, v, result)
+	case reflect.Struct:
+		return d.decodeStruct(name, v, result)
 	default:
 		return fmt.Errorf(
 			"%s: unknown kind to decode into: %s", name, k.Kind())
@@ -258,4 +271,146 @@ func (d *decoder) decodeString(name string, v *MrbValue, result reflect.Value) e
 	}
 
 	return nil
+}
+
+func (d *decoder) decodeStruct(name string, v *MrbValue, result reflect.Value) error {
+	var get decodeStructGetter
+
+	// We're going to be allocating some garbage, so set the arena
+	// so it is cleared properly.
+	mrb := v.Mrb()
+	defer mrb.ArenaRestore(mrb.ArenaSave())
+
+	// Depending on the type, we need to generate a getter
+	switch t := v.Type(); t {
+	case TypeHash:
+		get = decodeStructHashGetter(mrb, v.Hash())
+	default:
+		return fmt.Errorf("%s: not an object type for struct (%v)", name, t)
+	}
+
+	// This slice will keep track of all the structs we'll be decoding.
+	// There can be more than one struct if there are embedded structs
+	// that are squashed.
+	structs := make([]reflect.Value, 1, 5)
+	structs[0] = result
+
+	// Compile the list of all the fields that we're going to be decoding
+	// from all the structs.
+	fields := make(map[*reflect.StructField]reflect.Value)
+	for len(structs) > 0 {
+		structVal := structs[0]
+		structs = structs[1:]
+
+		structType := structVal.Type()
+		for i := 0; i < structType.NumField(); i++ {
+			fieldType := structType.Field(i)
+
+			if fieldType.Anonymous {
+				fieldKind := fieldType.Type.Kind()
+				if fieldKind != reflect.Struct {
+					return fmt.Errorf(
+						"%s: unsupported type to struct: %s",
+						fieldType.Name, fieldKind)
+				}
+
+				// We have an embedded field. We "squash" the fields down
+				// if specified in the tag.
+				squash := false
+				tagParts := strings.Split(fieldType.Tag.Get(tagName), ",")
+				for _, tag := range tagParts[1:] {
+					if tag == "squash" {
+						squash = true
+						break
+					}
+				}
+
+				if squash {
+					structs = append(
+						structs, result.FieldByName(fieldType.Name))
+					continue
+				}
+			}
+
+			// Normal struct field, store it away
+			fields[&fieldType] = structVal.Field(i)
+		}
+	}
+
+	usedKeys := make(map[string]struct{})
+	decodedFields := make([]string, 0, len(fields))
+	decodedFieldsVal := make([]reflect.Value, 0)
+	for fieldType, field := range fields {
+		if !field.IsValid() {
+			// This should never happen
+			panic("field is not valid")
+		}
+
+		// If we can't set the field, then it is unexported or something,
+		// and we just continue onwards.
+		if !field.CanSet() {
+			continue
+		}
+
+		fieldName := fieldType.Name
+
+		tagValue := fieldType.Tag.Get(tagName)
+		tagParts := strings.SplitN(tagValue, ",", 2)
+		if len(tagParts) >= 2 {
+			switch tagParts[1] {
+			case "decodedFields":
+				decodedFieldsVal = append(decodedFieldsVal, field)
+				continue
+			}
+		}
+
+		if tagParts[0] != "" {
+			fieldName = tagParts[0]
+		}
+
+		// We move the arena for every value here so we don't
+		// generate too much intermediate garbage.
+		idx := mrb.ArenaSave()
+
+		// Get the Ruby string value
+		value, err := get(fieldName)
+		if err != nil {
+			mrb.ArenaRestore(idx)
+			return err
+		}
+
+		// Track the used key
+		usedKeys[fieldName] = struct{}{}
+
+		// Create the field name and decode. We range over the elements
+		// because we actually want the value.
+		fieldName = fmt.Sprintf("%s.%s", name, fieldName)
+		err = d.decode(fieldName, value, field)
+		mrb.ArenaRestore(idx)
+		if err != nil {
+			return err
+		}
+
+		decodedFields = append(decodedFields, fieldType.Name)
+	}
+
+	if len(decodedFieldsVal) > 0 {
+		// Sort it so that it is deterministic
+		sort.Strings(decodedFields)
+
+		for _, v := range decodedFieldsVal {
+			v.Set(reflect.ValueOf(decodedFields))
+		}
+	}
+
+	return nil
+}
+
+// decodeStructHashGetter is a decodeStructGetter that reads values from
+// a hash.
+func decodeStructHashGetter(mrb *Mrb, h *Hash) decodeStructGetter {
+	return func(key string) (*MrbValue, error) {
+		rbKey := mrb.StringValue(strings.ToLower(key))
+		return h.Get(rbKey)
+	}
 }
