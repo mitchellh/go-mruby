@@ -164,7 +164,7 @@ func (m *Mrb) LoadString(code string) (*MrbValue, error) {
 	return newValue(m.state, value), nil
 }
 
-// LaodFile loads the given file, executes it, and returns its final
+// LoadFile loads the given file, executes it, and returns its final
 // value that it might return.
 func (m *Mrb) LoadFile(file string) (*MrbValue, error) {
 
