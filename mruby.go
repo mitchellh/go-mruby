@@ -170,10 +170,10 @@ func (m *Mrb) LoadFile(file string) (*MrbValue, error) {
 
   fs := C.CString(file)
   ms := C.CString("r")
-  fd := C.fopen(cs, rs)
+  fd := C.fopen(fs, ms)
   defer C.fclose(fd)
-  defer C.free(unsafe.Pointer(fs))
   defer C.free(unsafe.Pointer(ms))
+  defer C.free(unsafe.Pointer(fs))
 
   value := C.mrb_load_file(m.state, fd)
   if m.state.exc != nil {
