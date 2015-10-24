@@ -15,6 +15,7 @@
 #include <mruby/hash.h>
 #include <mruby/proc.h>
 #include <mruby/string.h>
+#include <mruby/throw.h>
 #include <mruby/value.h>
 #include <mruby/variable.h>
 
@@ -47,6 +48,41 @@ static inline mrb_value _go_mrb_func_call(mrb_state *s, mrb_value self) {
 // just calls back into Go.
 static inline mrb_func_t _go_mrb_func_t() {
     return &_go_mrb_func_call;
+}
+
+//-------------------------------------------------------------------
+// Helpers to deal with calling into Ruby (C)
+//-------------------------------------------------------------------
+// These are some really horrible C macros that are used to wrap
+// various mruby C API function calls so that we catch the exceptions.
+// If we let exceptions through then the longjmp will cause a Go stack
+// split.
+#define GOMRUBY_EXC_PROTECT_START \
+    struct mrb_jmpbuf *prev_jmp = mrb->jmp; \
+    struct mrb_jmpbuf c_jmp; \
+    mrb_value result = mrb_nil_value(); \
+    MRB_TRY(&c_jmp) { \
+        mrb->jmp = &c_jmp;
+
+#define GOMRUBY_EXC_PROTECT_END \
+        mrb->jmp = prev_jmp; \
+    } MRB_CATCH(&c_jmp) { \
+        mrb->jmp = prev_jmp; \
+        result = mrb_nil_value();\
+    } MRB_END_EXC(&c_jmp); \
+    mrb_gc_protect(mrb, result); \
+    return result;
+
+static mrb_value _go_mrb_load_string(mrb_state *mrb, const char *s) {
+    GOMRUBY_EXC_PROTECT_START
+    result = mrb_load_string(mrb, s);
+    GOMRUBY_EXC_PROTECT_END
+}
+
+static mrb_value _go_mrb_yield_argv(mrb_state *mrb, mrb_value b, mrb_int argc, const mrb_value *argv) {
+    GOMRUBY_EXC_PROTECT_START
+    result = mrb_yield_argv(mrb, b, argc, argv);
+    GOMRUBY_EXC_PROTECT_END
 }
 
 //-------------------------------------------------------------------

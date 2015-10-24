@@ -67,6 +67,28 @@ func TestMrbDefineClass(t *testing.T) {
 	}
 }
 
+func TestMrbDefineClass_methodException(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	cb := func(m *Mrb, self *MrbValue) (Value, Value) {
+		v, err := m.LoadString(`raise "exception"`)
+		if err != nil {
+			exc := err.(*Exception)
+			return nil, exc.MrbValue
+		}
+
+		return v, nil
+	}
+
+	class := mrb.DefineClass("Hello", mrb.ObjectClass())
+	class.DefineClassMethod("foo", cb, ArgsNone())
+	_, err := mrb.LoadString(`Hello.foo`)
+	if err == nil {
+		t.Fatal("should error")
+	}
+}
+
 func TestMrbDefineClassUnder(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
@@ -193,7 +215,6 @@ func TestMrbGetArgs(t *testing.T) {
 			[]string{`Hello`, `"bar"`, "true"},
 		},
 
-
 		{
 			`("bar", true) {}`,
 			[]ValueType{TypeString, TypeTrue, TypeProc},
@@ -298,7 +319,7 @@ func TestMrbRaise(t *testing.T) {
 	if err == nil {
 		t.Fatal("should have error")
 	}
-	if  err.Error() != "ouch" {
+	if err.Error() != "ouch" {
 		t.Fatalf("bad: %s", err)
 	}
 }
@@ -324,5 +345,27 @@ func TestMrbYield(t *testing.T) {
 	}
 	if value.Fixnum() != 42 {
 		t.Fatalf("bad: %s", value)
+	}
+}
+
+func TestMrbYield_exception(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	cb := func(m *Mrb, self *MrbValue) (Value, Value) {
+		result, err := m.Yield(m.GetArgs()[0])
+		if err != nil {
+			exc := err.(*Exception)
+			return nil, exc.MrbValue
+		}
+
+		return result, nil
+	}
+
+	class := mrb.DefineClass("Hello", mrb.ObjectClass())
+	class.DefineClassMethod("foo", cb, ArgsBlock())
+	_, err := mrb.LoadString(`Hello.foo { raise "exception" }`)
+	if err == nil {
+		t.Fatal("should error")
 	}
 }

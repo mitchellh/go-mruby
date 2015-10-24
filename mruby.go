@@ -156,7 +156,7 @@ func (m *Mrb) LoadString(code string) (*MrbValue, error) {
 	cs := C.CString(code)
 	defer C.free(unsafe.Pointer(cs))
 
-	value := C.mrb_load_string(m.state, cs)
+	value := C._go_mrb_load_string(m.state, cs)
 	if m.state.exc != nil {
 		return nil, newExceptionValue(m.state)
 	}
@@ -204,7 +204,7 @@ func (m *Mrb) Yield(block Value, args ...Value) (*MrbValue, error) {
 		argvPtr = &argv[0]
 	}
 
-	result := C.mrb_yield_argv(
+	result := C._go_mrb_yield_argv(
 		m.state,
 		mrbBlock.value,
 		C.mrb_int(len(argv)),
