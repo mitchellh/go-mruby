@@ -30,7 +30,7 @@ func init() {
 }
 
 //export go_mrb_func_call
-func go_mrb_func_call(s *C.mrb_state, v *C.mrb_value, c_exc *C.mrb_value) *C.mrb_value {
+func go_mrb_func_call(s *C.mrb_state, v *C.mrb_value, c_exc *C.mrb_value) C.mrb_value {
 	// Lookup the classes that we've registered methods for in this state
 	classTable := stateMethodTable[s]
 	if classTable == nil {
@@ -56,9 +56,10 @@ func go_mrb_func_call(s *C.mrb_state, v *C.mrb_value, c_exc *C.mrb_value) *C.mrb
 	// TODO(mitchellh): reuse the Mrb instead of allocating every time
 	mrb := &Mrb{s}
 	result, exc := f(mrb, newValue(s, *v))
+
 	if exc != nil {
 		*c_exc = exc.MrbValue(mrb).value
-		return &mrb.NilValue().value
+		return mrb.NilValue().value
 	}
 
 	// If the result was a Go nil, convert it to a Ruby nil
@@ -66,7 +67,7 @@ func go_mrb_func_call(s *C.mrb_state, v *C.mrb_value, c_exc *C.mrb_value) *C.mrb
 		result = mrb.NilValue()
 	}
 
-	return &result.MrbValue(mrb).value
+	return result.MrbValue(mrb).value
 }
 
 func insertMethod(s *C.mrb_state, c *C.struct_RClass, n string, f Func) {
