@@ -24,7 +24,7 @@
 //-------------------------------------------------------------------
 // This is declard in func.go and is a way for us to call back into
 // Go to execute a method.
-extern mrb_value *go_mrb_func_call(mrb_state*, mrb_value*, mrb_value*);
+extern mrb_value go_mrb_func_call(mrb_state*, mrb_value*, mrb_value*);
 
 // This calls into Go with a similar signature to mrb_func_t. We have to
 // change it slightly because cgo can't handle the union type of mrb_value,
@@ -32,8 +32,7 @@ extern mrb_value *go_mrb_func_call(mrb_state*, mrb_value*, mrb_value*);
 // pointer to work around Go's confusion with unions.
 static inline mrb_value _go_mrb_func_call(mrb_state *s, mrb_value self) {
     mrb_value exc = mrb_nil_value();
-    mrb_value result = *go_mrb_func_call(s, &self, &exc);
-
+    mrb_value result = go_mrb_func_call(s, &self, &exc);
     // We raise if we got an exception. We have to raise from here and
     // not from within Go because it messes with Go's calling conventions,
     // resulting in a broken stack.
