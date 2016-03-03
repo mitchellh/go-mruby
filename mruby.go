@@ -31,6 +31,13 @@ func NewMrb() *Mrb {
 	}
 }
 
+// Clears the last exception from mruby state to enable further use of the VM.
+// Without calling this function after an exception is raised, all go-mruby
+// execution paths will continue to return an error.
+func (m *Mrb) ClearException() {
+	m.state.exc = nil
+}
+
 // Restores the arena index so the objects between the save and this point
 // can be garbage collected in the future.
 //

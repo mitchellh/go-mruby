@@ -11,6 +11,29 @@ func TestNewMrb(t *testing.T) {
 	mrb.Close()
 }
 
+func TestMrbClearException(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	mrb.LoadString(`raise "An exception"`)
+
+	_, err := mrb.LoadString(`"test"`)
+	if err == nil {
+		t.Fatal("exception expected")
+	}
+
+	mrb.ClearException()
+
+	value, err := mrb.LoadString(`"test"`)
+	if err != nil {
+		t.Fatal("exception should have been cleared")
+	}
+
+	if value.String() != "test" {
+		t.Fatal("bad test value returned")
+	}
+}
+
 func TestMrbArena(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
