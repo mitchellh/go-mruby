@@ -175,4 +175,8 @@ static inline enum mrb_vtype _go_mrb_type(mrb_value o) {
     return mrb_type(o);
 }
 
+static inline mrb_bool _go_mrb_nil_p(mrb_value o) {
+    return mrb_nil_p(o);
+}
+
 #endif

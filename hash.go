@@ -20,7 +20,7 @@ func (h *Hash) Delete(key Value) (*MrbValue, error) {
 	}
 
 	val := newValue(h.state, result)
-	if val.Type() == TypeFalse {
+	if val.Type() == TypeNil {
 		val = nil
 	}
 

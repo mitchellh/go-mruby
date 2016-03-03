@@ -35,30 +35,31 @@ type MrbValue struct {
 type ValueType uint32
 
 const (
-	TypeFalse ValueType = iota
-	TypeFree
-	TypeTrue
-	TypeFixnum
-	TypeSymbol
-	TypeUndef
-	TypeFloat
-	TypeCptr
-	TypeObject
-	TypeClass
-	TypeModule
-	TypeIClass
-	TypeSClass
-	TypeProc
-	TypeArray
-	TypeHash
-	TypeString
-	TypeRange
-	TypeException
-	TypeFile
-	TypeEnv
-	TypeData
-	TypeFiber
-	TypeMaxDefine
+	TypeFalse     ValueType = iota // 0
+	TypeFree                       // 1
+	TypeTrue                       // 2
+	TypeFixnum                     // 3
+	TypeSymbol                     // 4
+	TypeUndef                      // 5
+	TypeFloat                      // 6
+	TypeCptr                       // 7
+	TypeObject                     // 8
+	TypeClass                      // 9
+	TypeModule                     // 10
+	TypeIClass                     // 11
+	TypeSClass                     // 12
+	TypeProc                       // 13
+	TypeArray                      // 14
+	TypeHash                       // 15
+	TypeString                     // 16
+	TypeRange                      // 17
+	TypeException                  // 18
+	TypeFile                       // 19
+	TypeEnv                        // 20
+	TypeData                       // 21
+	TypeFiber                      // 22
+	TypeMaxDefine                  // 23
+	TypeNil       ValueType = 0xffffffff
 )
 
 func init() {
@@ -155,6 +156,10 @@ func (v *MrbValue) SetProcTargetClass(c *Class) {
 }
 
 func (v *MrbValue) Type() ValueType {
+	if C._go_mrb_nil_p(v.value) == 1 {
+		return TypeNil
+	}
+
 	return ValueType(C._go_mrb_type(v.value))
 }
 
