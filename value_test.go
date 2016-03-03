@@ -100,6 +100,98 @@ func TestMrbValueString(t *testing.T) {
 	}
 }
 
+func TestMrbValueType(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	cases := []struct {
+		Input    string
+		Expected ValueType
+	}{
+		{
+			`false`,
+			TypeFalse,
+		},
+		// TypeFree - Type of value after GC collection
+		{
+			`true`,
+			TypeTrue,
+		},
+		{
+			`1`,
+			TypeFixnum,
+		},
+		{
+			`:test`,
+			TypeSymbol,
+		},
+		// TypeUndef - Internal value used by mruby for undefined things (instance vars etc)
+		// These all seem to get converted to exceptions before hitting userland
+		{
+			`1.1`,
+			TypeFloat,
+		},
+		// TypeCptr
+		{
+			`Object.new`,
+			TypeObject,
+		},
+		{
+			`Object`,
+			TypeClass,
+		},
+		{
+			`module T; end; T`,
+			TypeModule,
+		},
+		// TypeIClass
+		// TypeSClass
+		{
+			`Proc.new { 1 }`,
+			TypeProc,
+		},
+		{
+			`[]`,
+			TypeArray,
+		},
+		{
+			`{}`,
+			TypeHash,
+		},
+		{
+			`"string"`,
+			TypeString,
+		},
+		{
+			`1..2`,
+			TypeRange,
+		},
+		{
+			`Exception.new`,
+			TypeException,
+		},
+		// TypeFile
+		// TypeEnv
+		// TypeData
+		// TypeFiber
+		// TypeMaxDefine
+		{
+			`nil`,
+			TypeNil,
+		},
+	}
+
+	for _, c := range cases {
+		r, err := mrb.LoadString(c.Input)
+		if err != nil {
+			t.Fatalf("loadstring failed for case %#v: %s", c, err)
+		}
+		if cType := r.Type(); cType != c.Expected {
+			t.Fatalf("bad type: got %s, expected %s", cType, c.Expected)
+		}
+	}
+}
+
 func TestIntMrbValue(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()

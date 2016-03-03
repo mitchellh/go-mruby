@@ -26,7 +26,7 @@ func (v *Array) Get(idx int) (*MrbValue, error) {
 	}
 
 	val := newValue(v.state, result)
-	if val.Type() == TypeFalse {
+	if val.Type() == TypeNil {
 		val = nil
 	}
 
