@@ -83,7 +83,7 @@ func TestHash(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if value.Type() != TypeNil {
+	if value != nil {
 		t.Fatalf("bad: %s", value)
 	}
 }
