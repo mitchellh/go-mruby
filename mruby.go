@@ -157,8 +157,8 @@ func (m *Mrb) LoadString(code string) (*MrbValue, error) {
 	defer C.free(unsafe.Pointer(cs))
 
 	value := C._go_mrb_load_string(m.state, cs)
-	if m.state.exc != nil {
-		return nil, newExceptionValue(m.state)
+	if exc := checkException(m.state); exc != nil {
+		return nil, exc
 	}
 
 	return newValue(m.state, value), nil
@@ -179,8 +179,9 @@ func (m *Mrb) Run(v Value, self Value) (*MrbValue, error) {
 
 	proc := C._go_mrb_proc_ptr(mrbV.value)
 	value := C.mrb_run(m.state, proc, mrbSelf.value)
-	if m.state.exc != nil {
-		return nil, newExceptionValue(m.state)
+
+	if exc := checkException(m.state); exc != nil {
+		return nil, exc
 	}
 
 	return newValue(m.state, value), nil
@@ -209,8 +210,9 @@ func (m *Mrb) Yield(block Value, args ...Value) (*MrbValue, error) {
 		mrbBlock.value,
 		C.mrb_int(len(argv)),
 		argvPtr)
-	if m.state.exc != nil {
-		return nil, newExceptionValue(m.state)
+
+	if exc := checkException(m.state); exc != nil {
+		return nil, exc
 	}
 
 	return newValue(m.state, result), nil
@@ -318,4 +320,15 @@ func (m *Mrb) StringValue(s string) *MrbValue {
 	cs := C.CString(s)
 	defer C.free(unsafe.Pointer(cs))
 	return newValue(m.state, C.mrb_str_new_cstr(m.state, cs))
+}
+
+func checkException(state *C.mrb_state) error {
+	if state.exc == nil {
+		return nil
+	}
+
+	err := newExceptionValue(state)
+	state.exc = nil
+
+	return err
 }

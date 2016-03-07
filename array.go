@@ -21,9 +21,6 @@ func (v *Array) Len() int {
 // to the element in the array.
 func (v *Array) Get(idx int) (*MrbValue, error) {
 	result := C.mrb_ary_entry(v.value, C.mrb_int(idx))
-	if v.state.exc != nil {
-		return nil, newExceptionValue(v.state)
-	}
 
 	val := newValue(v.state, result)
 	if val.Type() == TypeNil {

@@ -305,6 +305,26 @@ func TestMrbLoadString_twice(t *testing.T) {
 	}
 }
 
+func TestMrbLoadStringException(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	_, err := mrb.LoadString(`raise "An exception"`)
+
+	if err == nil {
+		t.Fatal("exception expected")
+	}
+
+	value, err := mrb.LoadString(`"test"`)
+	if err != nil {
+		t.Fatal("exception should have been cleared")
+	}
+
+	if value.String() != "test" {
+		t.Fatal("bad test value returned")
+	}
+}
+
 func TestMrbRaise(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
@@ -348,7 +368,7 @@ func TestMrbYield(t *testing.T) {
 	}
 }
 
-func TestMrbYield_exception(t *testing.T) {
+func TestMrbYieldException(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
 
@@ -367,5 +387,51 @@ func TestMrbYield_exception(t *testing.T) {
 	_, err := mrb.LoadString(`Hello.foo { raise "exception" }`)
 	if err == nil {
 		t.Fatal("should error")
+	}
+
+	_, err = mrb.LoadString(`Hello.foo { 1 }`)
+	if err != nil {
+		t.Fatal("exception should have been cleared")
+	}
+}
+
+func TestMrbRun(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	parser := NewParser(mrb)
+	defer parser.Close()
+	context := NewCompileContext(mrb)
+	defer context.Close()
+
+	parser.Parse(`
+		if $do_raise
+			raise "exception"
+		else
+			"rval"
+		end`,
+		context,
+	)
+
+	proc := parser.GenerateCode()
+
+	// Enable proc exception raising & verify
+	mrb.LoadString(`$do_raise = true`)
+	_, err := mrb.Run(proc, nil)
+
+	if err == nil {
+		t.Fatalf("expected exception, %#v", err)
+	}
+
+	// Disable proc exception raising
+	// If we still have an exception, it wasn't cleared from the previous invocation.
+	mrb.LoadString(`$do_raise = false`)
+	rval, err := mrb.Run(proc, nil)
+	if err != nil {
+		t.Fatalf("unexpected exception, %#v", err)
+	}
+
+	if rval.String() != "rval" {
+		t.Fatalf("expected return value 'rval', got %#v", rval)
 	}
 }

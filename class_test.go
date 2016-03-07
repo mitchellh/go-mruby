@@ -67,6 +67,29 @@ func TestClassNew(t *testing.T) {
 	testCallbackResult(t, value)
 }
 
+func TestClassNewException(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	class := mrb.DefineClass("Hello", mrb.ObjectClass())
+	class.DefineMethod("initialize", testCallbackException, ArgsNone())
+
+	_, err := class.New()
+	if err == nil {
+		t.Fatalf("expected exception")
+	}
+
+	// Verify exception is cleared
+	val, err := mrb.LoadString(`"test"`)
+	if err != nil {
+		t.Fatalf("unexpected exception: %#v", err)
+	}
+
+	if val.String() != "test" {
+		t.Fatalf("expected val 'test', got %#v", val)
+	}
+}
+
 func TestClassValue(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
