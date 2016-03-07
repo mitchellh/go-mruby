@@ -22,6 +22,11 @@ func TestMrbValueCall(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
+	_, err = value.Call("some_function_that_doesnt_exist")
+	if err == nil {
+		t.Fatalf("expected exception")
+	}
+
 	result, err := value.Call("==", String("foo"))
 	if err != nil {
 		t.Fatalf("err: %s", err)

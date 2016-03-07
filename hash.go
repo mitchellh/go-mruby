@@ -15,9 +15,6 @@ type Hash struct {
 func (h *Hash) Delete(key Value) (*MrbValue, error) {
 	keyVal := key.MrbValue(&Mrb{h.state}).value
 	result := C.mrb_hash_delete_key(h.state, h.value, keyVal)
-	if h.state.exc != nil {
-		return nil, newExceptionValue(h.state)
-	}
 
 	val := newValue(h.state, result)
 	if val.Type() == TypeNil {
@@ -31,10 +28,6 @@ func (h *Hash) Delete(key Value) (*MrbValue, error) {
 func (h *Hash) Get(key Value) (*MrbValue, error) {
 	keyVal := key.MrbValue(&Mrb{h.state}).value
 	result := C.mrb_hash_get(h.state, h.value, keyVal)
-	if h.state.exc != nil {
-		return nil, newExceptionValue(h.state)
-	}
-
 	return newValue(h.state, result), nil
 }
 
@@ -42,12 +35,7 @@ func (h *Hash) Get(key Value) (*MrbValue, error) {
 func (h *Hash) Set(key, val Value) error {
 	keyVal := key.MrbValue(&Mrb{h.state}).value
 	valVal := val.MrbValue(&Mrb{h.state}).value
-
 	C.mrb_hash_set(h.state, h.value, keyVal, valVal)
-	if h.state.exc != nil {
-		return newExceptionValue(h.state)
-	}
-
 	return nil
 }
 
@@ -56,9 +44,5 @@ func (h *Hash) Set(key, val Value) error {
 // you see fit.
 func (h *Hash) Keys() (*MrbValue, error) {
 	result := C.mrb_hash_keys(h.state, h.value)
-	if h.state.exc != nil {
-		return nil, newExceptionValue(h.state)
-	}
-
 	return newValue(h.state, result), nil
 }

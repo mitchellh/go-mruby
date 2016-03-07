@@ -126,8 +126,9 @@ func (v *MrbValue) call(method string, args []Value, block Value) (*MrbValue, er
 			argvPtr,
 			*blockV)
 	}
-	if v.state.exc != nil {
-		return nil, newExceptionValue(v.state)
+
+	if exc := checkException(v.state); exc != nil {
+		return nil, exc
 	}
 
 	return newValue(v.state, result), nil
