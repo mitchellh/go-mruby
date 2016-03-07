@@ -2,6 +2,8 @@ package mruby
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"unsafe"
 )
 
@@ -168,23 +170,18 @@ func (v *MrbValue) Type() ValueType {
 // and implements the Error interface.
 type Exception struct {
 	*MrbValue
-
-	// A cache of the string value of the exception. This is set in
-	// newExceptionValue so that the exception error string doesn't rely
-	// on the mruby state being available.
-	cachedString string
+	File      string
+	Line      int
+	Message   string
+	Backtrace []string
 }
 
 func (e *Exception) Error() string {
-	return e.String()
+	return e.Message
 }
 
 func (e *Exception) String() string {
-	if e.cachedString != "" {
-		return e.cachedString
-	}
-
-	return e.MrbValue.String()
+	return e.Message
 }
 
 //-------------------------------------------------------------------
@@ -253,11 +250,41 @@ func newExceptionValue(s *C.mrb_state) *Exception {
 		panic("exception value init without exception")
 	}
 
+	arenaIndex := C.mrb_gc_arena_save(s)
+
 	// Convert the RObject* to an mrb_value
 	value := C.mrb_obj_value(unsafe.Pointer(s.exc))
 
+	// Retrieve and convert backtrace to []string (avoiding reflection in Decode)
+	var backtrace []string
+	mrbBacktrace := newValue(s, C.mrb_exc_backtrace(s, value)).Array()
+	for i := 0; i < mrbBacktrace.Len(); i++ {
+		ln, _ := mrbBacktrace.Get(i)
+		backtrace = append(backtrace, ln.String())
+	}
+
+	// Extract file + line from first backtrace line
+	file := "Unknown"
+	line := 0
+	if len(backtrace) > 0 {
+		fileAndLine := strings.Split(backtrace[0], ":")
+		if len(fileAndLine) >= 2 {
+			file = fileAndLine[0]
+			line, _ = strconv.Atoi(fileAndLine[1])
+		}
+	}
+
+	C.mrb_gc_arena_restore(s, C.int(arenaIndex))
+
 	result := newValue(s, value)
-	return &Exception{MrbValue: result, cachedString: result.String()}
+
+	return &Exception{
+		MrbValue:  result,
+		Message:   result.String(),
+		File:      file,
+		Line:      line,
+		Backtrace: backtrace,
+	}
 }
 
 func newValue(s *C.mrb_state, v C.mrb_value) *MrbValue {
