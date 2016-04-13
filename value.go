@@ -251,6 +251,7 @@ func newExceptionValue(s *C.mrb_state) *Exception {
 	}
 
 	arenaIndex := C.mrb_gc_arena_save(s)
+	defer C.mrb_gc_arena_restore(s, C.int(arenaIndex))
 
 	// Convert the RObject* to an mrb_value
 	value := C.mrb_obj_value(unsafe.Pointer(s.exc))
@@ -274,10 +275,7 @@ func newExceptionValue(s *C.mrb_state) *Exception {
 		}
 	}
 
-	C.mrb_gc_arena_restore(s, C.int(arenaIndex))
-
 	result := newValue(s, value)
-
 	return &Exception{
 		MrbValue:  result,
 		Message:   result.String(),

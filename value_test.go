@@ -39,15 +39,12 @@ func TestExceptionBacktrace(t *testing.T) {
 			`, context)
 
 	proc := parser.GenerateCode()
-
 	_, err := mrb.Run(proc, nil)
-
 	if err == nil {
 		t.Fatalf("expected exception")
 	}
 
 	exc := err.(*Exception)
-
 	if exc.Message != "Exception" {
 		t.Fatalf("bad exception message: %s", exc.Message)
 	}
