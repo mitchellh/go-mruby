@@ -11,6 +11,7 @@
 #include <mruby/array.h>
 #include <mruby/class.h>
 #include <mruby/compile.h>
+#include <mruby/error.h>
 #include <mruby/irep.h>
 #include <mruby/hash.h>
 #include <mruby/proc.h>

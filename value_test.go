@@ -8,9 +8,61 @@ func TestExceptionString_afterClose(t *testing.T) {
 	mrb := NewMrb()
 	_, err := mrb.LoadString(`clearly a syntax error`)
 	mrb.Close()
-
 	// This panics before the bug fix that this test tests
 	err.Error()
+}
+
+func TestExceptionBacktrace(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	parser := NewParser(mrb)
+	defer parser.Close()
+	context := NewCompileContext(mrb)
+	context.SetFilename("hello.rb")
+	defer context.Close()
+
+	parser.Parse(`
+				def do_error
+					raise "Exception"
+				end
+
+				def hop1
+					do_error
+				end
+
+				def hop2
+					hop1
+				end
+
+				hop2
+			`, context)
+
+	proc := parser.GenerateCode()
+
+	_, err := mrb.Run(proc, nil)
+
+	if err == nil {
+		t.Fatalf("expected exception")
+	}
+
+	exc := err.(*Exception)
+
+	if exc.Message != "Exception" {
+		t.Fatalf("bad exception message: %s", exc.Message)
+	}
+
+	if exc.File != "hello.rb" {
+		t.Fatalf("bad file: %s", exc.File)
+	}
+
+	if exc.Line != 3 {
+		t.Fatalf("bad line: %d", exc.Line)
+	}
+
+	if len(exc.Backtrace) != 4 {
+		t.Fatalf("bad backtrace: %#v", exc.Backtrace)
+	}
 }
 
 func TestMrbValueCall(t *testing.T) {
