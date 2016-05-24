@@ -52,7 +52,7 @@ variables prior to calling `make`:
   * `MRUBY_CONFIG` is the path to a `build_config.rb` file used to configure
     how mruby is built. If this is not set, go-mruby will use the default
     build config that comes with mruby. You can learn more about configuring
-    the mruby build [here](https://github.com/mruby/mruby/tree/master/doc/compile).
+    the mruby build [here](https://github.com/mruby/mruby/tree/master/doc/guides/compile.md).
 
 ## Usage
 
