@@ -19,6 +19,16 @@ func TestMrbArena(t *testing.T) {
 	mrb.ArenaRestore(idx)
 }
 
+func TestMrbModule(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	module := mrb.Module("Kernel")
+	if module == nil {
+		t.Fatal("module was nil and should not be")
+	}
+}
+
 func TestMrbClass(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()

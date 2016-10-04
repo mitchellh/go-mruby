@@ -80,6 +80,18 @@ func (m *Mrb) Class(name string, super *Class) *Class {
 	return newClass(m, class)
 }
 
+// Module returns the named module as a *Class. If the module is invalid,
+// NameError is triggered within your program and SIGABRT is sent to the
+// application.
+func (m *Mrb) Module(name string) *Class {
+	cs := C.CString(name)
+	defer C.free(unsafe.Pointer(cs))
+
+	class := C.mrb_module_get(m.state, cs)
+
+	return newClass(m, class)
+}
+
 // Close a Mrb, this must be called to properly free resources, and
 // should only be called once.
 func (m *Mrb) Close() {
