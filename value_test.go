@@ -1,6 +1,7 @@
 package mruby
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -265,5 +266,40 @@ func TestStringMrbValue(t *testing.T) {
 	v := value.MrbValue(mrb)
 	if v.String() != "foo" {
 		t.Fatalf("bad value")
+	}
+}
+
+func TestValueClass(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	val, err := mrb.ObjectClass().New()
+	if err != nil {
+		t.Fatalf("Error constructing object of type Object: %v", err)
+	}
+
+	if !reflect.DeepEqual(val.Class(), mrb.ObjectClass()) {
+		t.Fatal("Class of value was not equivalent to constructed class")
+	}
+}
+
+func TestValueSingletonClass(t *testing.T) {
+	mrb := NewMrb()
+	defer mrb.Close()
+
+	fn := func(m *Mrb, self *MrbValue) (Value, Value) {
+		args := m.GetArgs()
+		return Int(args[0].Fixnum() + args[1].Fixnum()), nil
+	}
+
+	mrb.TopSelf().SingletonClass().DefineMethod("add", fn, ArgsReq(2))
+
+	result, err := mrb.LoadString(`add(46, 2)`)
+	if err != nil {
+		t.Fatalf("Error parsing ruby code: %v", err)
+	}
+
+	if result.String() != "48" {
+		t.Fatalf("Result %q was not equal to the target value of 48", result.String())
 	}
 }
