@@ -31,7 +31,7 @@ func NewMrb() *Mrb {
 	}
 }
 
-// Restores the arena index so the objects between the save and this point
+// ArenaRestore restores the arena index so the objects between the save and this point
 // can be garbage collected in the future.
 //
 // See ArenaSave for more documentation.
@@ -39,7 +39,7 @@ func (m *Mrb) ArenaRestore(idx ArenaIndex) {
 	C.mrb_gc_arena_restore(m.state, C.int(idx))
 }
 
-// This saves the index into the arena.
+// ArenaSave saves the index into the arena.
 //
 // Restore the arena index later by calling ArenaRestore.
 //
@@ -205,8 +205,9 @@ func (m *Mrb) Run(v Value, self Value) (*MrbValue, error) {
 func (m *Mrb) Yield(block Value, args ...Value) (*MrbValue, error) {
 	mrbBlock := block.MrbValue(m)
 
-	var argv []C.mrb_value = nil
-	var argvPtr *C.mrb_value = nil
+	var argv []C.mrb_value
+	var argvPtr *C.mrb_value
+
 	if len(args) > 0 {
 		// Make the raw byte slice to hold our arguments we'll pass to C
 		argv = make([]C.mrb_value, len(args))
@@ -234,7 +235,7 @@ func (m *Mrb) Yield(block Value, args ...Value) (*MrbValue, error) {
 // Functions handling defining new classes/modules in the VM
 //-------------------------------------------------------------------
 
-// Define a new top-level class.
+// DefineClass defines a new top-level class.
 //
 // If super is nil, the class will be defined under Object.
 func (m *Mrb) DefineClass(name string, super *Class) *Class {
@@ -292,22 +293,22 @@ func (m *Mrb) DefineModuleUnder(name string, outer *Class) *Class {
 // Functions below return Values or constant Classes
 //-------------------------------------------------------------------
 
-// Returns the Object top-level class.
+// ObjectClass returns the Object top-level class.
 func (m *Mrb) ObjectClass() *Class {
 	return newClass(m, m.state.object_class)
 }
 
-// Returns the Object top-level class.
+// KernelModule returns the Kernel top-level module.
 func (m *Mrb) KernelModule() *Class {
 	return newClass(m, m.state.kernel_module)
 }
 
-// Returns the top-level `self` value.
+// TopSelf returns the top-level `self` value.
 func (m *Mrb) TopSelf() *MrbValue {
 	return newValue(m.state, C.mrb_obj_value(unsafe.Pointer(m.state.top_self)))
 }
 
-// Returns a Value for "false"
+// FalseValue returns a Value for "false"
 func (m *Mrb) FalseValue() *MrbValue {
 	return newValue(m.state, C.mrb_false_value())
 }
@@ -317,17 +318,17 @@ func (m *Mrb) NilValue() *MrbValue {
 	return newValue(m.state, C.mrb_nil_value())
 }
 
-// Returns a Value for "true"
+// TrueValue returns a Value for "true"
 func (m *Mrb) TrueValue() *MrbValue {
 	return newValue(m.state, C.mrb_true_value())
 }
 
-// Returns a Value for a fixed number.
+// FixnumValue returns a Value for a fixed number.
 func (m *Mrb) FixnumValue(v int) *MrbValue {
 	return newValue(m.state, C.mrb_fixnum_value(C.mrb_int(v)))
 }
 
-// Returns a Value for a string.
+// StringValue returns a Value for a string.
 func (m *Mrb) StringValue(s string) *MrbValue {
 	cs := C.CString(s)
 	defer C.free(unsafe.Pointer(cs))

@@ -104,11 +104,10 @@ func (d *decoder) decode(name string, v *MrbValue, result reflect.Value) error {
 	case reflect.Struct:
 		return d.decodeStruct(name, v, result)
 	default:
-		return fmt.Errorf(
-			"%s: unknown kind to decode into: %s", name, k.Kind())
 	}
 
-	return nil
+	return fmt.Errorf(
+		"%s: unknown kind to decode into: %s", name, k.Kind())
 }
 
 func (d *decoder) decodeBool(name string, v *MrbValue, result reflect.Value) error {
@@ -188,7 +187,7 @@ func (d *decoder) decodeInterface(name string, v *MrbValue, result reflect.Value
 		set = reflect.Indirect(reflect.New(reflect.TypeOf("")))
 	default:
 		return fmt.Errorf(
-			"%s: cannot decode into interface: %s",
+			"%s: cannot decode into interface: %v",
 			name, t)
 	}
 
@@ -422,9 +421,12 @@ func (d *decoder) decodeStruct(name string, v *MrbValue, result reflect.Value) e
 		}
 	}
 
-	usedKeys := make(map[string]struct{})
-	decodedFields := make([]string, 0, len(fields))
-	decodedFieldsVal := make([]reflect.Value, 0)
+	var (
+		decodedFields    = make([]string, 0, len(fields))
+		decodedFieldsVal = []reflect.Value{}
+		usedKeys         = make(map[string]struct{})
+	)
+
 	for fieldType, field := range fields {
 		if !field.IsValid() {
 			// This should never happen
