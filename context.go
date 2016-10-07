@@ -13,6 +13,7 @@ type CompileContext struct {
 	mrb      *Mrb
 }
 
+// NewCompileContext constructs a *CompileContext from a *Mrb.
 func NewCompileContext(m *Mrb) *CompileContext {
 	return &CompileContext{
 		ctx: C.mrbc_context_new(m.state),
@@ -20,7 +21,7 @@ func NewCompileContext(m *Mrb) *CompileContext {
 	}
 }
 
-// Closes the context, freeing any resources associated with it.
+// Close the context, freeing any resources associated with it.
 //
 // This is safe to call once the context has been used for parsing/loading
 // any Ruby code.

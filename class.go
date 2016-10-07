@@ -52,16 +52,16 @@ func (c *Class) DefineMethod(name string, cb Func, as ArgSpec) {
 		C.mrb_aspec(as))
 }
 
-// Value returns a *Value for this Class. *Values are sometimes required
+// MrbValue returns a *Value for this Class. *Values are sometimes required
 // as arguments where classes should be valid.
 func (c *Class) MrbValue(m *Mrb) *MrbValue {
 	return newValue(c.mrb.state, C.mrb_obj_value(unsafe.Pointer(c.class)))
 }
 
-// Instantiate the class with the given args.
+// New instantiates the class with the given args.
 func (c *Class) New(args ...Value) (*MrbValue, error) {
-	var argv []C.mrb_value = nil
-	var argvPtr *C.mrb_value = nil
+	var argv []C.mrb_value
+	var argvPtr *C.mrb_value
 	if len(args) > 0 {
 		// Make the raw byte slice to hold our arguments we'll pass to C
 		argv = make([]C.mrb_value, len(args))

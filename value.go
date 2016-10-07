@@ -17,8 +17,13 @@ type Value interface {
 	MrbValue(*Mrb) *MrbValue
 }
 
+// Int is the basic ruby Integer type.
 type Int int
+
+// NilType is the object representation of NilClass
 type NilType [0]byte
+
+// String is objects of the type String.
 type String string
 
 // Nil is a constant that can be used as a Nil Value
@@ -31,38 +36,6 @@ type MrbValue struct {
 	value C.mrb_value
 	state *C.mrb_state
 }
-
-// ValueType is an enum of types that a Value can be and is returned by
-// Value.Type().
-type ValueType uint32
-
-const (
-	TypeFalse     ValueType = iota // 0
-	TypeFree                       // 1
-	TypeTrue                       // 2
-	TypeFixnum                     // 3
-	TypeSymbol                     // 4
-	TypeUndef                      // 5
-	TypeFloat                      // 6
-	TypeCptr                       // 7
-	TypeObject                     // 8
-	TypeClass                      // 9
-	TypeModule                     // 10
-	TypeIClass                     // 11
-	TypeSClass                     // 12
-	TypeProc                       // 13
-	TypeArray                      // 14
-	TypeHash                       // 15
-	TypeString                     // 16
-	TypeRange                      // 17
-	TypeException                  // 18
-	TypeFile                       // 19
-	TypeEnv                        // 20
-	TypeData                       // 21
-	TypeFiber                      // 22
-	TypeMaxDefine                  // 23
-	TypeNil       ValueType = 0xffffffff
-)
 
 func init() {
 	Nil = [0]byte{}
@@ -87,8 +60,8 @@ func (v *MrbValue) CallBlock(method string, args ...Value) (*MrbValue, error) {
 }
 
 func (v *MrbValue) call(method string, args []Value, block Value) (*MrbValue, error) {
-	var argv []C.mrb_value = nil
-	var argvPtr *C.mrb_value = nil
+	var argv []C.mrb_value
+	var argvPtr *C.mrb_value
 
 	if len(args) > 0 {
 		// Make the raw byte slice to hold our arguments we'll pass to C
@@ -158,6 +131,7 @@ func (v *MrbValue) SetProcTargetClass(c *Class) {
 	proc.target_class = c.class
 }
 
+// Type returns the ValueType of the MrbValue. See the constants table.
 func (v *MrbValue) Type() ValueType {
 	if C._go_mrb_nil_p(v.value) == 1 {
 		return TypeNil
@@ -229,14 +203,17 @@ func (v *MrbValue) String() string {
 // Native Go types implementing the Value interface
 //-------------------------------------------------------------------
 
+// MrbValue returns the native MRB value
 func (i Int) MrbValue(m *Mrb) *MrbValue {
 	return m.FixnumValue(int(i))
 }
 
+// MrbValue returns the native MRB value
 func (NilType) MrbValue(m *Mrb) *MrbValue {
 	return m.NilValue()
 }
 
+// MrbValue returns the native MRB value
 func (s String) MrbValue(m *Mrb) *MrbValue {
 	return m.StringValue(string(s))
 }
