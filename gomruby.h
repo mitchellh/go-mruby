@@ -180,4 +180,8 @@ static inline mrb_bool _go_mrb_nil_p(mrb_value o) {
     return mrb_nil_p(o);
 }
 
+static inline struct RClass *_go_mrb_class_ptr(mrb_value o) {
+  return mrb_class_ptr(o);
+}
+
 #endif

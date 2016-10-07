@@ -199,6 +199,20 @@ func (v *MrbValue) String() string {
 	return result
 }
 
+// Class returns the *Class of a value.
+func (v *MrbValue) Class() *Class {
+	mrb := &Mrb{v.state}
+	return newClass(mrb, C.mrb_class(v.state, v.value))
+}
+
+// SingletonClass returns the singleton class (a class isolated just for the
+// scope of the object) for the given value.
+func (v *MrbValue) SingletonClass() *Class {
+	mrb := &Mrb{v.state}
+	sclass := C._go_mrb_class_ptr(C.mrb_singleton_class(v.state, v.value))
+	return newClass(mrb, sclass)
+}
+
 //-------------------------------------------------------------------
 // Native Go types implementing the Value interface
 //-------------------------------------------------------------------
