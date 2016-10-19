@@ -1,4 +1,4 @@
-MRUBY_COMMIT ?= 57e30b3be3146bae437cfd0ffdfd630dde956ef9
+MRUBY_COMMIT ?= 1.2.0
 
 all: libmruby.a
 	go test
