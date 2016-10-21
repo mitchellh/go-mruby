@@ -1,4 +1,4 @@
-# mruby Library for Go
+# mruby Library for Go [![Build Status](https://travis-ci.org/mitchellh/go-mruby.svg?branch=master)](https://travis-ci.org/mitchellh/go-mruby)
 
 go-mruby provides [mruby](https://github.com/mruby/mruby) bindings for
 [Go](http://golang.org). This allows Go applications to run a lightweight
