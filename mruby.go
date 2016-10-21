@@ -3,7 +3,7 @@ package mruby
 import "unsafe"
 
 // #cgo CFLAGS: -Ivendor/mruby/include
-// #cgo LDFLAGS: libmruby.a -lm
+// #cgo LDFLAGS: ${SRCDIR}/libmruby.a -lm
 // #include <stdlib.h>
 // #include "gomruby.h"
 import "C"
