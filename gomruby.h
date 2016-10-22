@@ -25,15 +25,15 @@
 //-------------------------------------------------------------------
 // This is declard in func.go and is a way for us to call back into
 // Go to execute a method.
-extern mrb_value go_mrb_func_call(mrb_state*, mrb_value*, mrb_value*);
+extern mrb_value goMRBFuncCall(mrb_state*, mrb_value*, mrb_value*);
 
 // This calls into Go with a similar signature to mrb_func_t. We have to
 // change it slightly because cgo can't handle the union type of mrb_value,
 // so we pass in a pointer instead. Additionally, the result is also a
 // pointer to work around Go's confusion with unions.
-static inline mrb_value _go_mrb_func_call(mrb_state *s, mrb_value self) {
+static inline mrb_value _goMRBFuncCall(mrb_state *s, mrb_value self) {
     mrb_value exc = mrb_nil_value();
-    mrb_value result = go_mrb_func_call(s, &self, &exc);
+    mrb_value result = goMRBFuncCall(s, &self, &exc);
     // We raise if we got an exception. We have to raise from here and
     // not from within Go because it messes with Go's calling conventions,
     // resulting in a broken stack.
@@ -47,7 +47,7 @@ static inline mrb_value _go_mrb_func_call(mrb_state *s, mrb_value self) {
 // This method is used as a way to get a valid mrb_func_t that actually
 // just calls back into Go.
 static inline mrb_func_t _go_mrb_func_t() {
-    return &_go_mrb_func_call;
+    return &_goMRBFuncCall;
 }
 
 //-------------------------------------------------------------------
@@ -89,7 +89,7 @@ static mrb_value _go_mrb_yield_argv(mrb_state *mrb, mrb_value b, mrb_int argc, c
 // Helpers to deal with getting arguments
 //-------------------------------------------------------------------
 // This is declard in args.go
-extern void go_get_arg_append(mrb_value*);
+extern void goGetArgAppend(mrb_value*);
 
 // This gets all arguments given to a function call and adds them to
 // the accumulator in Go.
@@ -100,11 +100,11 @@ static inline int _go_mrb_get_args_all(mrb_state *s) {
 
     count = mrb_get_args(s, "*&", &argv, &argc, &block);
     for (i = 0; i < argc; i++) {
-        go_get_arg_append(&argv[i]);
+        goGetArgAppend(&argv[i]);
     }
 
     if (!mrb_nil_p(block)) {
-        go_get_arg_append(&block);
+        goGetArgAppend(&block);
     }
 
     return count;

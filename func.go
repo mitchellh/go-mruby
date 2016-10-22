@@ -29,8 +29,8 @@ func init() {
 	stateMethodTable = make(stateMethodMap)
 }
 
-//export go_mrb_func_call
-func go_mrb_func_call(s *C.mrb_state, v *C.mrb_value, c_exc *C.mrb_value) C.mrb_value {
+//export goMRBFuncCall
+func goMRBFuncCall(s *C.mrb_state, v *C.mrb_value, callExc *C.mrb_value) C.mrb_value {
 	// Lookup the classes that we've registered methods for in this state
 	classTable := stateMethodTable[s]
 	if classTable == nil {
@@ -58,7 +58,7 @@ func go_mrb_func_call(s *C.mrb_state, v *C.mrb_value, c_exc *C.mrb_value) C.mrb_
 	result, exc := f(mrb, newValue(s, *v))
 
 	if exc != nil {
-		*c_exc = exc.MrbValue(mrb).value
+		*callExc = exc.MrbValue(mrb).value
 		return mrb.NilValue().value
 	}
 

@@ -12,7 +12,7 @@ import "C"
 
 // Parser is a parser for Ruby code.
 type Parser struct {
-	code string
+	code   string
 	mrb    *Mrb
 	parser *C.struct_mrb_parser_state
 }
@@ -59,7 +59,7 @@ func (p *Parser) Parse(code string, c *CompileContext) ([]*ParserMessage, error)
 	p.parser.s = s
 	p.parser.send = C._go_mrb_calc_send(s)
 
-	var ctx *C.mrbc_context = nil
+	var ctx *C.mrbc_context
 	if c != nil {
 		ctx = c.ctx
 	}
