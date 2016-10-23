@@ -48,7 +48,7 @@ func ArgsOpt(n int) ArgSpec {
 var getArgAccumulator []*C.mrb_value
 var getArgLock sync.Mutex
 
-//export go_get_arg_append
-func go_get_arg_append(v *C.mrb_value) {
+//export goGetArgAppend
+func goGetArgAppend(v *C.mrb_value) {
 	getArgAccumulator = append(getArgAccumulator, v)
 }

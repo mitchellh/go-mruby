@@ -1,11 +1,13 @@
 MRUBY_COMMIT ?= 1.2.0
 
-all: libmruby.a
-	go test
+all: libmruby.a test
 
 clean:
 	rm -rf vendor
 	rm -f libmruby.a
+
+lint:
+	sh golint.sh
 
 libmruby.a: vendor/mruby
 	cd vendor/mruby && ${MAKE}
@@ -17,4 +19,7 @@ vendor/mruby:
 	cd vendor/mruby && git reset --hard && git clean -fdx
 	cd vendor/mruby && git checkout ${MRUBY_COMMIT}
 
-.PHONY: all clean libmruby.a test
+test: lint
+	go test -v
+
+.PHONY: all clean libmruby.a test lint
