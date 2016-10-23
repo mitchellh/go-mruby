@@ -6,6 +6,10 @@ clean:
 	rm -rf vendor
 	rm -f libmruby.a
 
+gofmt:
+	@echo "Checking code with gofmt.."
+	gofmt -s *.go >/dev/null
+
 lint:
 	sh golint.sh
 
@@ -19,7 +23,7 @@ vendor/mruby:
 	cd vendor/mruby && git reset --hard && git clean -fdx
 	cd vendor/mruby && git checkout ${MRUBY_COMMIT}
 
-test: lint
+test: gofmt lint
 	go test -v
 
 .PHONY: all clean libmruby.a test lint
