@@ -44,10 +44,9 @@ You can customize the mruby compilation by setting a couple environmental
 variables prior to calling `make`:
 
   * `MRUBY_COMMIT` is the git ref that will be checked out for mruby. This
-    defaults to "57e30b3be3146bae437cfd0ffdfd630dde956ef9" which is a Git
-    commit that contains a fix needed for this library. Some ref after this
-    commit must be specified. It is recommend you explicitly set this to a
-    ref that works for you to avoid any changes in this library later.
+    defaults to to a recently tagged version. Many versions before 1.2.0 do not
+    work with go-mruby. It is recommend you explicitly set this to a ref that
+    works for you to avoid any changes in this library later.
 
   * `MRUBY_CONFIG` is the path to a `build_config.rb` file used to configure
     how mruby is built. If this is not set, go-mruby will use the default
