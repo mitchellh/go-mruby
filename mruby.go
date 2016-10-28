@@ -1,6 +1,9 @@
 package mruby
 
-import "unsafe"
+import (
+	"fmt"
+	"unsafe"
+)
 
 // #cgo CFLAGS: -Ivendor/mruby/include
 // #cgo LDFLAGS: ${SRCDIR}/libmruby.a -lm
@@ -171,6 +174,33 @@ func (m *Mrb) LoadString(code string) (*MrbValue, error) {
 	value := C._go_mrb_load_string(m.state, cs)
 	if exc := checkException(m.state); exc != nil {
 		return nil, exc
+	}
+
+	return newValue(m.state, value), nil
+}
+
+// LoadFile loads the given file, executes it, and returns its final
+// value that it might return.
+func (m *Mrb) LoadFile(file string) (*MrbValue, error) {
+	fs := C.CString(file)
+	ms := C.CString("r")
+
+	defer C.free(unsafe.Pointer(ms))
+	defer C.free(unsafe.Pointer(fs))
+
+	fd, err := C.fopen(fs, ms)
+
+	if err != nil {
+		return nil, fmt.Errorf("Could not load %q: %v", file, err)
+	}
+
+	defer C.fclose(fd)
+
+	value, err := C.mrb_load_file(m.state, fd)
+	if m.state.exc != nil {
+		return nil, newExceptionValue(m.state)
+	} else if err != nil {
+		return nil, err
 	}
 
 	return newValue(m.state, value), nil
