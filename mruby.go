@@ -176,25 +176,6 @@ func (m *Mrb) LoadString(code string) (*MrbValue, error) {
 	return newValue(m.state, value), nil
 }
 
-// LoadFile loads the given file, executes it, and returns its final
-// value that it might return.
-func (m *Mrb) LoadFile(file string) (*MrbValue, error) {
-
-  fs := C.CString(file)
-  ms := C.CString("r")
-  fd := C.fopen(fs, ms)
-  defer C.fclose(fd)
-  defer C.free(unsafe.Pointer(ms))
-  defer C.free(unsafe.Pointer(fs))
-
-  value := C.mrb_load_file(m.state, fd)
-  if m.state.exc != nil {
-    return nil, newExceptionValue(m.state)
-  }
-
-  return newValue(m.state, value), nil
-}
-
 // Run executes the given value, which should be a proc type.
 //
 // If you're looking to execute code directly a string, look at LoadString.
