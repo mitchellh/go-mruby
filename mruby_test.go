@@ -2,7 +2,6 @@ package mruby
 
 import (
 	"fmt"
-	"io/ioutil"
 	"reflect"
 	"testing"
 )
@@ -444,35 +443,5 @@ func TestMrbRun(t *testing.T) {
 
 	if rval.String() != "rval" {
 		t.Fatalf("expected return value 'rval', got %#v", rval)
-	}
-}
-
-func TestMrbLoadFile(t *testing.T) {
-	mrb := NewMrb()
-
-	tf, err := ioutil.TempFile("", "mruby-prefix")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	tf.Write([]byte(`"hello"`))
-	tf.Close()
-
-	val, err := mrb.LoadFile(tf.Name())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if val == nil {
-		t.Fatal("did not recieve last evaluated result")
-	}
-
-	if val.String() != "hello" {
-		t.Fatal("Did not recieve intended string `hello` from last evaluated result")
-	}
-
-	_, err = mrb.LoadFile("/nonexistent")
-	if err == nil {
-		t.Fatal("No error recieved loading nonexistent file")
 	}
 }
