@@ -38,6 +38,9 @@ Compiling/installing the go-mruby library should work on Linux, Mac OS X,
 and Windows. On Windows, msys is the only supported build toolchain (same
 as Go itself).
 
+**Due to this linking, it is strongly recommended that you vendor this
+repository and bake our build system into your process.**
+
 ### Customizing the mruby Compilation
 
 You can customize the mruby compilation by setting a couple environmental
