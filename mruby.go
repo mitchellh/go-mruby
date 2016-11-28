@@ -61,7 +61,24 @@ func (m *Mrb) ArenaSave() ArenaIndex {
 	return ArenaIndex(C.mrb_gc_arena_save(m.state))
 }
 
-// Class returns the class with the given name and superclass. Note that
+// EnableGC enables the garbage collector for this mruby instance. It returns
+// true if garbage collection was previously disabled.
+func (m *Mrb) EnableGC() {
+	C._go_enable_gc(m.state)
+}
+
+// DisableGC disables the garbage collector for this mruby instance. It returns
+// true if it was previously disabled.
+func (m *Mrb) DisableGC() {
+	C._go_disable_gc(m.state)
+}
+
+// LiveObjectCount returns the number of objects that have not been collected (aka, alive).
+func (m *Mrb) LiveObjectCount() int {
+	return int(C._go_gc_live(m.state))
+}
+
+// Class returns the class with the kgiven name and superclass. Note that
 // if you call this with a class that doesn't exist, mruby will abort the
 // application (like a panic, but not a Go panic).
 //
