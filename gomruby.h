@@ -13,6 +13,7 @@
 #include <mruby/compile.h>
 #include <mruby/error.h>
 #include <mruby/irep.h>
+#include <mruby/gc.h>
 #include <mruby/hash.h>
 #include <mruby/proc.h>
 #include <mruby/string.h>
@@ -182,6 +183,44 @@ static inline mrb_bool _go_mrb_nil_p(mrb_value o) {
 
 static inline struct RClass *_go_mrb_class_ptr(mrb_value o) {
   return mrb_class_ptr(o);
+}
+
+static inline void _go_set_gc(mrb_state *m, int val) {
+  mrb_gc *gc = &m->gc;
+  gc->disabled = val;
+}
+
+static inline void _go_disable_gc(mrb_state *m) {
+  _go_set_gc(m, 1);
+}
+
+static inline void _go_enable_gc(mrb_state *m) {
+  _go_set_gc(m, 0);
+}
+
+// this function returns 1 if the value is dead, aka reaped or otherwise
+// terminated by the GC.
+static inline int _go_isdead(mrb_state *m, mrb_value o) {
+  // immediate values such as Fixnums and symbols are never to be garbage
+  // collected, so converting them to a basic pointer yields an invalid one.
+  // This pattern is seen in the mruby source's gc.c.
+  if mrb_immediate_p(o) {
+    return 0;
+  }
+
+  struct RBasic *ptr = mrb_basic_ptr(o);
+
+  // I don't actually know this is a potential condition but better safe than sorry.
+  if (ptr == NULL) {
+    return 1;
+  }
+
+  return mrb_object_dead_p(m, ptr);
+}
+
+static inline int _go_gc_live(mrb_state *m) {
+  mrb_gc *gc = &m->gc;
+  return gc->live;
 }
 
 #endif

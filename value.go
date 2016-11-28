@@ -111,7 +111,7 @@ func (v *MrbValue) call(method string, args []Value, block Value) (*MrbValue, er
 
 // IsDead tells you if an object has been collected by the GC or not.
 func (v *MrbValue) IsDead() bool {
-	return C.ushort(C.mrb_object_dead_p(v.state, C._go_mrb_basic_ptr(v.value))) != 0
+	return C.ushort(C._go_isdead(v.state, v.value)) != 0
 }
 
 // MrbValue so that *MrbValue implements the "Value" interface.
@@ -122,6 +122,11 @@ func (v *MrbValue) MrbValue(*Mrb) *MrbValue {
 // Mrb returns the Mrb state for this value.
 func (v *MrbValue) Mrb() *Mrb {
 	return &Mrb{v.state}
+}
+
+// GCProtect protects this value from being garbage collected.
+func (v *MrbValue) GCProtect() {
+	C.mrb_gc_protect(v.state, v.value)
 }
 
 // SetProcTargetClass sets the target class where a proc will be executed
