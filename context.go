@@ -8,9 +8,10 @@ import "C"
 // CompileContexts keep track of things such as filenames, line numbers,
 // as well as some settings for how to parse and execute code.
 type CompileContext struct {
-	ctx      *C.mrbc_context
-	filename string
-	mrb      *Mrb
+	ctx           *C.mrbc_context
+	filename      string
+	mrb           *Mrb
+	captureErrors bool
 }
 
 // NewCompileContext constructs a *CompileContext from a *Mrb.
@@ -40,4 +41,16 @@ func (c *CompileContext) Filename() string {
 func (c *CompileContext) SetFilename(f string) {
 	c.filename = f
 	c.ctx.filename = C.CString(c.filename)
+}
+
+// CaptureErrors toggles the capture errors feature of the parser, which
+// swallows errors. This allows repls and other partial parsing tools
+// (formatters, f.e.) to function.
+func (c *CompileContext) CaptureErrors(yes bool) {
+	state := 0
+	if yes {
+		state = 1
+	}
+
+	C._go_mrb_context_set_capture_errors(c.ctx, C.int(state))
 }
