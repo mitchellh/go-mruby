@@ -216,6 +216,32 @@ func (m *Mrb) Run(v Value, self Value) (*MrbValue, error) {
 	return newValue(m.state, value), nil
 }
 
+// RunWithContext is a context-aware parser (aka, it does not discard state
+// between runs). It returns a magic integer that describes the stack in place,
+// so that it can be re-used on the next call. This is how local variables can
+// traverse ruby parse invocations.
+//
+// Otherwise, it is very similar in function to Run()
+func (m *Mrb) RunWithContext(v Value, self Value, stackKeep int) (int, *MrbValue, error) {
+	if self == nil {
+		self = m.TopSelf()
+	}
+
+	mrbV := v.MrbValue(m)
+	mrbSelf := self.MrbValue(m)
+	proc := C._go_mrb_proc_ptr(mrbV.value)
+
+	i := C.int(stackKeep)
+
+	value := C._go_mrb_context_run(m.state, proc, mrbSelf.value, &i)
+
+	if exc := checkException(m.state); exc != nil {
+		return stackKeep, nil, exc
+	}
+
+	return int(i), newValue(m.state, value), nil
+}
+
 // Yield yields to a block with the given arguments.
 //
 // This should be called within the context of a Func.

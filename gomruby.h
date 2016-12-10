@@ -231,4 +231,10 @@ static inline void _go_mrb_context_set_capture_errors(struct mrbc_context *ctx, 
   }
 }
 
+static inline mrb_value _go_mrb_context_run(mrb_state *m, struct RProc *proc, mrb_value self, int *stack_keep) {
+  mrb_value result = mrb_context_run(m, proc, self, *stack_keep);
+  *stack_keep = proc->body.irep->nlocals;
+  return result;
+}
+
 #endif

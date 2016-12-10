@@ -444,4 +444,28 @@ func TestMrbRun(t *testing.T) {
 	if rval.String() != "rval" {
 		t.Fatalf("expected return value 'rval', got %#v", rval)
 	}
+
+	parser.Parse(`a = 10`, context)
+	proc = parser.GenerateCode()
+
+	stackKeep, ret, err := mrb.RunWithContext(proc, nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if stackKeep != 2 {
+		t.Fatalf("stack value was %d not 2; some variables may not have been captured", stackKeep)
+	}
+
+	parser.Parse(`a`, context)
+	proc = parser.GenerateCode()
+
+	stackKeep, ret, err = mrb.RunWithContext(proc, nil, stackKeep)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if ret.String() != "10" {
+		t.Fatalf("Captured variable was not expected value: was %q", ret.String())
+	}
 }
