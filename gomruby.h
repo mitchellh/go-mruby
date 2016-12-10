@@ -223,4 +223,12 @@ static inline int _go_gc_live(mrb_state *m) {
   return gc->live;
 }
 
+static inline void _go_mrb_context_set_capture_errors(struct mrbc_context *ctx, int state) {
+  ctx->capture_errors = FALSE;
+
+  if (state != 0) {
+    ctx->capture_errors = TRUE;
+  }
+}
+
 #endif
