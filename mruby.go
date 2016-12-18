@@ -160,13 +160,10 @@ func (m *Mrb) GetArgs() []*MrbValue {
 	values := make([]*MrbValue, len(getArgAccumulator))
 	for i, v := range getArgAccumulator {
 		values[i] = newValue(m.state, *v)
-
-		// Unset the accumulator value for GC
-		getArgAccumulator[i] = nil
 	}
 
 	// Clear reset the accumulator to zero length
-	getArgAccumulator = getArgAccumulator[:0]
+	getArgAccumulator = make([]*C.mrb_value, 0, 5)
 
 	return values
 }

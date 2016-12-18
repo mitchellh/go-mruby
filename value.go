@@ -63,11 +63,13 @@ func (v *MrbValue) call(method string, args []Value, block Value) (*MrbValue, er
 	var argv []C.mrb_value
 	var argvPtr *C.mrb_value
 
+	mrb := &Mrb{v.state}
+
 	if len(args) > 0 {
 		// Make the raw byte slice to hold our arguments we'll pass to C
 		argv = make([]C.mrb_value, len(args))
 		for i, arg := range args {
-			argv[i] = arg.MrbValue(&Mrb{v.state}).value
+			argv[i] = arg.MrbValue(mrb).value
 		}
 
 		argvPtr = &argv[0]
@@ -75,7 +77,7 @@ func (v *MrbValue) call(method string, args []Value, block Value) (*MrbValue, er
 
 	var blockV *C.mrb_value
 	if block != nil {
-		val := block.MrbValue(&Mrb{v.state}).value
+		val := block.MrbValue(mrb).value
 		blockV = &val
 	}
 

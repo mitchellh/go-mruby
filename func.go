@@ -39,11 +39,13 @@ type stateMethods struct {
 
 // stateMethodTable is the lookup table for methods that we define in Go and
 // expose in Ruby. This is cleaned up by Mrb.Close.
-var stateMethodTable = &stateMethods{}
+var stateMethodTable *stateMethods
 
 func init() {
-	stateMethodTable.Mutex = new(sync.Mutex)
-	stateMethodTable.Map = make(stateMethodMap)
+	stateMethodTable = &stateMethods{
+		Mutex: new(sync.Mutex),
+		Map:   make(stateMethodMap),
+	}
 }
 
 //export goMRBFuncCall

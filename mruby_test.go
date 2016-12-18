@@ -236,7 +236,7 @@ func TestMrbGetArgs(t *testing.T) {
 
 	// lots of this effort is centered around testing multithreaded behavior.
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 1000; i++ {
 
 		errChan := make(chan error, len(cases))
 
