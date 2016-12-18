@@ -113,7 +113,9 @@ func (m *Mrb) Module(name string) *Class {
 // should only be called once.
 func (m *Mrb) Close() {
 	// Delete all the methods from the state
-	delete(stateMethodTable, m.state)
+	stateMethodTable.Mutex.Lock()
+	delete(stateMethodTable.Map, m.state)
+	stateMethodTable.Mutex.Unlock()
 
 	// Close the state
 	C.mrb_close(m.state)
