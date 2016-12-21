@@ -1,8 +1,6 @@
 package mruby
 
-import (
-	"sync"
-)
+import "sync"
 
 // #include "gomruby.h"
 import "C"
@@ -45,10 +43,10 @@ func ArgsOpt(n int) ArgSpec {
 
 // The global accumulator when Mrb.GetArgs is called. There is a
 // global lock around this so that the access to it is safe.
-var getArgAccumulator []*C.mrb_value
-var getArgLock sync.Mutex
+var getArgAccumulator []C.mrb_value
+var getArgLock = new(sync.Mutex)
 
 //export goGetArgAppend
-func goGetArgAppend(v *C.mrb_value) {
+func goGetArgAppend(v C.mrb_value) {
 	getArgAccumulator = append(getArgAccumulator, v)
 }
