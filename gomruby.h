@@ -7,6 +7,7 @@
 #ifndef _GOMRUBY_H_INCLUDED
 #define _GOMRUBY_H_INCLUDED
 
+#include <errno.h>
 #include <mruby.h>
 #include <mruby/array.h>
 #include <mruby/class.h>
@@ -20,6 +21,13 @@
 #include <mruby/throw.h>
 #include <mruby/value.h>
 #include <mruby/variable.h>
+
+// (erikh) this can be set in mruby/mrbconfig.h so we can default it here.
+// XXX I don't know how this actually plays out when the config is modified.
+// I'm taking a WAG here. Either way, the default is 16 in vm.c.
+#ifndef MRB_FUNCALL_ARGC_MAX
+  #define MRB_FUNCALL_ARGC_MAX 16
+#endif // MRB_FUNCALL_ARGC_MAX
 
 //-------------------------------------------------------------------
 // Helpers to deal with calling back into Go.
@@ -90,23 +98,31 @@ static mrb_value _go_mrb_yield_argv(mrb_state *mrb, mrb_value b, mrb_int argc, c
 // Helpers to deal with getting arguments
 //-------------------------------------------------------------------
 // This is declard in args.go
-extern void goGetArgAppend(mrb_value*);
+extern void goGetArgAppend(mrb_value);
 
 // This gets all arguments given to a function call and adds them to
 // the accumulator in Go.
 static inline int _go_mrb_get_args_all(mrb_state *s) {
     mrb_value *argv;
     mrb_value block;
+    mrb_bool append;
     int argc, i, count;
 
-    count = mrb_get_args(s, "*&", &argv, &argc, &block);
-    for (i = 0; i < argc; i++) {
-        goGetArgAppend(&argv[i]);
+    count = mrb_get_args(s, "*&?", &argv, &argc, &block, &append);
+    if (count < 0 || errno != 0) {
+        return count;
     }
 
-    if (!mrb_nil_p(block)) {
-        goGetArgAppend(&block);
+    for (i = 0; i < argc; i++) {
+        goGetArgAppend(argv[i]);
     }
+
+    if (append == FALSE || mrb_type(block) == MRB_TT_FALSE) {
+        return count;
+    }
+
+    count++;
+    goGetArgAppend(block);
 
     return count;
 }
@@ -196,6 +212,10 @@ static inline void _go_disable_gc(mrb_state *m) {
 
 static inline void _go_enable_gc(mrb_state *m) {
   _go_set_gc(m, 0);
+}
+
+static inline int _go_get_max_funcall_args() {
+  return MRB_FUNCALL_ARGC_MAX;
 }
 
 // this function returns 1 if the value is dead, aka reaped or otherwise
