@@ -519,3 +519,54 @@ func TestMrbDefineMethodConcurrent(t *testing.T) {
 		<-syncChan
 	}
 }
+
+func TestMrbStackedException(t *testing.T) {
+	var testClass *Class
+
+	createException := func(m *Mrb, msg string) Value {
+		val, err := m.Class("Exception", nil).New(String(msg))
+		if err != nil {
+			panic(fmt.Sprintf("could not construct exception for return: %v", err))
+		}
+
+		return val
+	}
+
+	testFunc := func(m *Mrb, self *MrbValue) (Value, Value) {
+		args := m.GetArgs()
+
+		t, err := testClass.New()
+		if err != nil {
+			return nil, createException(m, err.Error())
+		}
+
+		argv := []Value{}
+		for _, arg := range args {
+			argv = append(argv, Value(arg))
+		}
+		v, err := t.Call("dotest!", argv...)
+		if err != nil {
+			return nil, createException(m, err.Error())
+		}
+
+		return v, nil
+	}
+
+	doTestFunc := func(m *Mrb, self *MrbValue) (Value, Value) {
+		err := createException(m, "Fail us!")
+		return nil, err
+	}
+
+	mrb := NewMrb()
+	mrb.DisableGC()
+
+	testClass = mrb.DefineClass("TestClass", nil)
+	testClass.DefineMethod("dotest!", doTestFunc, ArgsReq(0)|ArgsOpt(3))
+
+	mrb.TopSelf().SingletonClass().DefineMethod("test", testFunc, ArgsReq(0)|ArgsOpt(3))
+
+	_, err := mrb.LoadString("test")
+	if err == nil {
+		t.Fatal("No exception when one was expected")
+	}
+}

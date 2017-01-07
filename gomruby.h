@@ -34,29 +34,12 @@
 //-------------------------------------------------------------------
 // This is declard in func.go and is a way for us to call back into
 // Go to execute a method.
-extern mrb_value goMRBFuncCall(mrb_state*, mrb_value*, mrb_value*);
-
-// This calls into Go with a similar signature to mrb_func_t. We have to
-// change it slightly because cgo can't handle the union type of mrb_value,
-// so we pass in a pointer instead. Additionally, the result is also a
-// pointer to work around Go's confusion with unions.
-static inline mrb_value _goMRBFuncCall(mrb_state *s, mrb_value self) {
-    mrb_value exc = mrb_nil_value();
-    mrb_value result = goMRBFuncCall(s, &self, &exc);
-    // We raise if we got an exception. We have to raise from here and
-    // not from within Go because it messes with Go's calling conventions,
-    // resulting in a broken stack.
-    if (!mrb_nil_p(exc)) {
-        mrb_exc_raise(s, exc);
-    }
-
-    return result;
-}
+extern mrb_value goMRBFuncCall(mrb_state*, mrb_value);
 
 // This method is used as a way to get a valid mrb_func_t that actually
 // just calls back into Go.
 static inline mrb_func_t _go_mrb_func_t() {
-    return &_goMRBFuncCall;
+    return &goMRBFuncCall;
 }
 
 //-------------------------------------------------------------------
@@ -255,6 +238,10 @@ static inline mrb_value _go_mrb_context_run(mrb_state *m, struct RProc *proc, mr
   mrb_value result = mrb_context_run(m, proc, self, *stack_keep);
   *stack_keep = proc->body.irep->nlocals;
   return result;
+}
+
+static inline struct RObject* _go_mrb_getobj(mrb_value v) {
+  return mrb_obj_ptr(v);
 }
 
 #endif

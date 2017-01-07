@@ -49,7 +49,7 @@ func init() {
 }
 
 //export goMRBFuncCall
-func goMRBFuncCall(s *C.mrb_state, v *C.mrb_value, callExc *C.mrb_value) C.mrb_value {
+func goMRBFuncCall(s *C.mrb_state, v C.mrb_value) C.mrb_value {
 	// Lookup the classes that we've registered methods for in this state
 	stateMethodTable.Mutex.Lock()
 	classTable := stateMethodTable.Map[s]
@@ -80,16 +80,14 @@ func goMRBFuncCall(s *C.mrb_state, v *C.mrb_value, callExc *C.mrb_value) C.mrb_v
 	// Call the method to get our *Value
 	// TODO(mitchellh): reuse the Mrb instead of allocating every time
 	mrb := &Mrb{s}
-	result, exc := f(mrb, newValue(s, *v))
+	result, exc := f(mrb, newValue(s, v))
 
-	if exc != nil {
-		*callExc = exc.MrbValue(mrb).value
-		return mrb.NilValue().value
-	}
-
-	// If the result was a Go nil, convert it to a Ruby nil
 	if result == nil {
 		result = mrb.NilValue()
+	}
+
+	if exc != nil {
+		s.exc = C._go_mrb_getobj(exc.MrbValue(mrb).value)
 	}
 
 	return result.MrbValue(mrb).value
