@@ -88,6 +88,7 @@ func goMRBFuncCall(s *C.mrb_state, v C.mrb_value) C.mrb_value {
 
 	if exc != nil {
 		s.exc = C._go_mrb_getobj(exc.MrbValue(mrb).value)
+		return mrb.NilValue().value
 	}
 
 	return result.MrbValue(mrb).value

@@ -86,23 +86,13 @@ func (v *MrbValue) call(method string, args []Value, block Value) (*MrbValue, er
 
 	// If we have a block, we have to call a separate function to
 	// pass a block in. Otherwise, we just call it directly.
-	var result C.mrb_value
-	if blockV == nil {
-		result = C.mrb_funcall_argv(
-			v.state,
-			v.value,
-			C.mrb_intern_cstr(v.state, cs),
-			C.mrb_int(len(argv)),
-			argvPtr)
-	} else {
-		result = C.mrb_funcall_with_block(
-			v.state,
-			v.value,
-			C.mrb_intern_cstr(v.state, cs),
-			C.mrb_int(len(argv)),
-			argvPtr,
-			*blockV)
-	}
+	result := C._go_mrb_call(
+		v.state,
+		v.value,
+		C.mrb_intern_cstr(v.state, cs),
+		C.mrb_int(len(argv)),
+		argvPtr,
+		blockV)
 
 	if exc := checkException(v.state); exc != nil {
 		return nil, exc

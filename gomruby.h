@@ -77,6 +77,16 @@ static mrb_value _go_mrb_yield_argv(mrb_state *mrb, mrb_value b, mrb_int argc, c
     GOMRUBY_EXC_PROTECT_END
 }
 
+static mrb_value _go_mrb_call(mrb_state *mrb, mrb_value b, mrb_sym method, mrb_int argc, const mrb_value *argv, mrb_value *block) {
+  GOMRUBY_EXC_PROTECT_START
+  if (block != NULL) {
+		result = mrb_funcall_with_block(mrb, b, method, argc, argv, *block);
+  } else {
+    result = mrb_funcall_argv(mrb, b, method, argc, argv);
+  }
+  GOMRUBY_EXC_PROTECT_END
+}
+
 //-------------------------------------------------------------------
 // Helpers to deal with getting arguments
 //-------------------------------------------------------------------

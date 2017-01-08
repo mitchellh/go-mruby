@@ -558,7 +558,6 @@ func TestMrbStackedException(t *testing.T) {
 	}
 
 	mrb := NewMrb()
-	mrb.DisableGC()
 
 	testClass = mrb.DefineClass("TestClass", nil)
 	testClass.DefineMethod("dotest!", doTestFunc, ArgsReq(0)|ArgsOpt(3))
@@ -568,5 +567,34 @@ func TestMrbStackedException(t *testing.T) {
 	_, err := mrb.LoadString("test")
 	if err == nil {
 		t.Fatal("No exception when one was expected")
+		return
 	}
+
+	mrb.Close()
+	mrb = NewMrb()
+
+	evalFunc := func(m *Mrb, self *MrbValue) (Value, Value) {
+		arg := m.GetArgs()[0]
+		result, err := self.CallBlock("instance_eval", arg)
+		if err != nil {
+			return result, createException(m, err.Error())
+		}
+
+		return result, nil
+	}
+
+	mrb.TopSelf().SingletonClass().DefineMethod("myeval", evalFunc, ArgsBlock())
+
+	result, err := mrb.LoadString("myeval { raise 'foo' }")
+	if err == nil {
+		t.Fatal("did not error")
+		return
+	}
+
+	if result != nil {
+		t.Fatal("result was not cleared")
+		return
+	}
+
+	mrb.Close()
 }
