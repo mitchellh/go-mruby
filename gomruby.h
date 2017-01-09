@@ -99,25 +99,22 @@ static inline int _go_mrb_get_args_all(mrb_state *s) {
     mrb_value *argv;
     mrb_value block;
     mrb_bool append;
-    int argc, i, count;
+    int argc, i;
 
-    count = mrb_get_args(s, "*&?", &argv, &argc, &block, &append);
-    if (count < 0 || errno != 0) {
-        return count;
-    }
+    mrb_get_args(s, "*&?", &argv, &argc, &block, &append);
 
     for (i = 0; i < argc; i++) {
         goGetArgAppend(argv[i]);
     }
 
     if (append == FALSE || mrb_type(block) == MRB_TT_FALSE) {
-        return count;
+        return argc;
     }
 
-    count++;
+    argc++;
     goGetArgAppend(block);
 
-    return count;
+    return argc;
 }
 
 //-------------------------------------------------------------------
