@@ -113,7 +113,9 @@ func (m *Mrb) Module(name string) *Class {
 // should only be called once.
 func (m *Mrb) Close() {
 	// Delete all the methods from the state
-	delete(stateMethodTable, m.state)
+	stateMethodTable.Mutex.Lock()
+	delete(stateMethodTable.Map, m.state)
+	stateMethodTable.Mutex.Unlock()
 
 	// Close the state
 	C.mrb_close(m.state)
@@ -145,26 +147,18 @@ func (m *Mrb) GetArgs() []*MrbValue {
 	getArgLock.Lock()
 	defer getArgLock.Unlock()
 
-	// If we haven't initialized the accumulator yet, do it. We then
-	// keep this slice cached around forever.
-	if getArgAccumulator == nil {
-		getArgAccumulator = make([]*C.mrb_value, 0, 5)
-	}
+	// Clear reset the accumulator to zero length
+	getArgAccumulator = make([]C.mrb_value, 0, C._go_get_max_funcall_args())
 
 	// Get all the arguments and put it into our accumulator
-	C._go_mrb_get_args_all(m.state)
+	count := C._go_mrb_get_args_all(m.state)
 
 	// Convert those all to values
-	values := make([]*MrbValue, len(getArgAccumulator))
-	for i, v := range getArgAccumulator {
-		values[i] = newValue(m.state, *v)
+	values := make([]*MrbValue, count)
 
-		// Unset the accumulator value for GC
-		getArgAccumulator[i] = nil
+	for i := 0; i < int(count); i++ {
+		values[i] = newValue(m.state, getArgAccumulator[i])
 	}
-
-	// Clear reset the accumulator to zero length
-	getArgAccumulator = getArgAccumulator[:0]
 
 	return values
 }

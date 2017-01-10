@@ -2,6 +2,7 @@ package mruby
 
 import (
 	"fmt"
+	"sync"
 	"unsafe"
 )
 
@@ -17,22 +18,42 @@ import "C"
 // The second return value is an exception, if any. This will be raised.
 type Func func(m *Mrb, self *MrbValue) (Value, Value)
 
-type classMethodMap map[*C.struct_RClass]methodMap
+type classMethodMap map[*C.struct_RClass]*methods
 type methodMap map[C.mrb_sym]Func
-type stateMethodMap map[*C.mrb_state]classMethodMap
+type stateMethodMap map[*C.mrb_state]*classMethods
+
+type classMethods struct {
+	Map   classMethodMap
+	Mutex *sync.Mutex
+}
+
+type methods struct {
+	Map   methodMap
+	Mutex *sync.Mutex
+}
+
+type stateMethods struct {
+	Map   stateMethodMap
+	Mutex *sync.Mutex
+}
 
 // stateMethodTable is the lookup table for methods that we define in Go and
 // expose in Ruby. This is cleaned up by Mrb.Close.
-var stateMethodTable stateMethodMap
+var stateMethodTable *stateMethods
 
 func init() {
-	stateMethodTable = make(stateMethodMap)
+	stateMethodTable = &stateMethods{
+		Mutex: new(sync.Mutex),
+		Map:   make(stateMethodMap),
+	}
 }
 
 //export goMRBFuncCall
-func goMRBFuncCall(s *C.mrb_state, v *C.mrb_value, callExc *C.mrb_value) C.mrb_value {
+func goMRBFuncCall(s *C.mrb_state, v C.mrb_value) C.mrb_value {
 	// Lookup the classes that we've registered methods for in this state
-	classTable := stateMethodTable[s]
+	stateMethodTable.Mutex.Lock()
+	classTable := stateMethodTable.Map[s]
+	stateMethodTable.Mutex.Unlock()
 	if classTable == nil {
 		panic(fmt.Sprintf("func call from unknown state: %p", s))
 	}
@@ -41,13 +62,17 @@ func goMRBFuncCall(s *C.mrb_state, v *C.mrb_value, callExc *C.mrb_value) C.mrb_v
 	ci := s.c.ci
 
 	// Lookup the class itself
-	methodTable := classTable[ci.proc.target_class]
+	classTable.Mutex.Lock()
+	methodTable := classTable.Map[ci.proc.target_class]
+	classTable.Mutex.Unlock()
 	if methodTable == nil {
 		panic(fmt.Sprintf("func call on unknown class"))
 	}
 
 	// Lookup the method
-	f := methodTable[ci.mid]
+	methodTable.Mutex.Lock()
+	f := methodTable.Map[ci.mid]
+	methodTable.Mutex.Unlock()
 	if f == nil {
 		panic(fmt.Sprintf("func call on unknown method"))
 	}
@@ -55,37 +80,42 @@ func goMRBFuncCall(s *C.mrb_state, v *C.mrb_value, callExc *C.mrb_value) C.mrb_v
 	// Call the method to get our *Value
 	// TODO(mitchellh): reuse the Mrb instead of allocating every time
 	mrb := &Mrb{s}
-	result, exc := f(mrb, newValue(s, *v))
+	result, exc := f(mrb, newValue(s, v))
 
-	if exc != nil {
-		*callExc = exc.MrbValue(mrb).value
-		return mrb.NilValue().value
-	}
-
-	// If the result was a Go nil, convert it to a Ruby nil
 	if result == nil {
 		result = mrb.NilValue()
+	}
+
+	if exc != nil {
+		s.exc = C._go_mrb_getobj(exc.MrbValue(mrb).value)
+		return mrb.NilValue().value
 	}
 
 	return result.MrbValue(mrb).value
 }
 
 func insertMethod(s *C.mrb_state, c *C.struct_RClass, n string, f Func) {
-	classLookup := stateMethodTable[s]
+	stateMethodTable.Mutex.Lock()
+	classLookup := stateMethodTable.Map[s]
 	if classLookup == nil {
-		classLookup = make(classMethodMap)
-		stateMethodTable[s] = classLookup
+		classLookup = &classMethods{Map: make(classMethodMap), Mutex: new(sync.Mutex)}
+		stateMethodTable.Map[s] = classLookup
 	}
+	stateMethodTable.Mutex.Unlock()
 
-	methodLookup := classLookup[c]
+	classLookup.Mutex.Lock()
+	methodLookup := classLookup.Map[c]
 	if methodLookup == nil {
-		methodLookup = make(methodMap)
-		classLookup[c] = methodLookup
+		methodLookup = &methods{Map: make(methodMap), Mutex: new(sync.Mutex)}
+		classLookup.Map[c] = methodLookup
 	}
+	classLookup.Mutex.Unlock()
 
 	cs := C.CString(n)
 	defer C.free(unsafe.Pointer(cs))
 
 	sym := C.mrb_intern_cstr(s, cs)
-	methodLookup[sym] = f
+	methodLookup.Mutex.Lock()
+	methodLookup.Map[sym] = f
+	methodLookup.Mutex.Unlock()
 }

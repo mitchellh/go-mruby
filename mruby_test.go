@@ -189,12 +189,14 @@ func TestMrbFullGC(t *testing.T) {
 	}
 }
 
+type testcase struct {
+	args   string
+	types  []ValueType
+	result []string
+}
+
 func TestMrbGetArgs(t *testing.T) {
-	cases := []struct {
-		args   string
-		types  []ValueType
-		result []string
-	}{
+	cases := []testcase{
 		{
 			`("foo")`,
 			[]ValueType{TypeString},
@@ -232,50 +234,71 @@ func TestMrbGetArgs(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		var actual []*MrbValue
-		testFunc := func(m *Mrb, self *MrbValue) (Value, Value) {
-			actual = m.GetArgs()
-			return self, nil
+	// lots of this effort is centered around testing multithreaded behavior.
+
+	for i := 0; i < 1000; i++ {
+
+		errChan := make(chan error, len(cases))
+
+		for _, tc := range cases {
+			go func(tc testcase) {
+				var actual []*MrbValue
+				testFunc := func(m *Mrb, self *MrbValue) (Value, Value) {
+					actual = m.GetArgs()
+					return self, nil
+				}
+
+				mrb := NewMrb()
+				defer mrb.Close()
+				class := mrb.DefineClass("Hello", mrb.ObjectClass())
+				class.DefineClassMethod("test", testFunc, ArgsAny())
+				_, err := mrb.LoadString(fmt.Sprintf("Hello.test%s", tc.args))
+				if err != nil {
+					errChan <- fmt.Errorf("err: %s", err)
+					return
+				}
+
+				if tc.result != nil {
+					if len(actual) != len(tc.result) {
+						errChan <- fmt.Errorf("%s: expected %d, got %d",
+							tc.args, len(tc.result), len(actual))
+						return
+					}
+				}
+
+				actualStrings := make([]string, len(actual))
+				actualTypes := make([]ValueType, len(actual))
+				for i, v := range actual {
+					str, err := v.Call("inspect")
+					if err != nil {
+						t.Fatalf("err: %s", err)
+					}
+
+					actualStrings[i] = str.String()
+					actualTypes[i] = v.Type()
+				}
+
+				if !reflect.DeepEqual(actualTypes, tc.types) {
+					errChan <- fmt.Errorf("code: %s\nexpected: %#v\nactual: %#v",
+						tc.args, tc.types, actualTypes)
+					return
+				}
+
+				if tc.result != nil {
+					if !reflect.DeepEqual(actualStrings, tc.result) {
+						errChan <- fmt.Errorf("expected: %#v\nactual: %#v",
+							tc.result, actualStrings)
+						return
+					}
+				}
+
+				errChan <- nil
+			}(tc)
 		}
 
-		mrb := NewMrb()
-		defer mrb.Close()
-		class := mrb.DefineClass("Hello", mrb.ObjectClass())
-		class.DefineClassMethod("test", testFunc, ArgsAny())
-		_, err := mrb.LoadString(fmt.Sprintf("Hello.test%s", tc.args))
-		if err != nil {
-			t.Fatalf("err: %s", err)
-		}
-
-		if tc.result != nil {
-			if len(actual) != len(tc.result) {
-				t.Fatalf("%s: expected %d, got %d",
-					tc.args, len(tc.result), len(actual))
-			}
-		}
-
-		actualStrings := make([]string, len(actual))
-		actualTypes := make([]ValueType, len(actual))
-		for i, v := range actual {
-			str, err := v.Call("inspect")
-			if err != nil {
-				t.Fatalf("err: %s", err)
-			}
-
-			actualStrings[i] = str.String()
-			actualTypes[i] = v.Type()
-		}
-
-		if !reflect.DeepEqual(actualTypes, tc.types) {
-			t.Fatalf("code: %s\nexpected: %#v\nactual: %#v",
-				tc.args, tc.types, actualTypes)
-		}
-
-		if tc.result != nil {
-			if !reflect.DeepEqual(actualStrings, tc.result) {
-				t.Fatalf("expected: %#v\nactual: %#v",
-					tc.result, actualStrings)
+		for range cases {
+			if err := <-errChan; err != nil {
+				t.Fatal(err)
 			}
 		}
 	}
@@ -468,4 +491,110 @@ func TestMrbRun(t *testing.T) {
 	if ret.String() != "10" {
 		t.Fatalf("Captured variable was not expected value: was %q", ret.String())
 	}
+}
+
+func TestMrbDefineMethodConcurrent(t *testing.T) {
+	concurrency := 100
+	numFuncs := 100
+
+	cb := func(m *Mrb, self *MrbValue) (Value, Value) {
+		return m.GetArgs()[0], nil
+	}
+
+	syncChan := make(chan struct{}, concurrency)
+
+	for i := 0; i < concurrency; i++ {
+		go func() {
+			mrb := NewMrb()
+			defer mrb.Close()
+			for i := 0; i < numFuncs; i++ {
+				mrb.TopSelf().SingletonClass().DefineMethod(fmt.Sprintf("test%d", i), cb, ArgsAny())
+			}
+
+			syncChan <- struct{}{}
+		}()
+	}
+
+	for i := 0; i < concurrency; i++ {
+		<-syncChan
+	}
+}
+
+func TestMrbStackedException(t *testing.T) {
+	var testClass *Class
+
+	createException := func(m *Mrb, msg string) Value {
+		val, err := m.Class("Exception", nil).New(String(msg))
+		if err != nil {
+			panic(fmt.Sprintf("could not construct exception for return: %v", err))
+		}
+
+		return val
+	}
+
+	testFunc := func(m *Mrb, self *MrbValue) (Value, Value) {
+		args := m.GetArgs()
+
+		t, err := testClass.New()
+		if err != nil {
+			return nil, createException(m, err.Error())
+		}
+
+		argv := []Value{}
+		for _, arg := range args {
+			argv = append(argv, Value(arg))
+		}
+		v, err := t.Call("dotest!", argv...)
+		if err != nil {
+			return nil, createException(m, err.Error())
+		}
+
+		return v, nil
+	}
+
+	doTestFunc := func(m *Mrb, self *MrbValue) (Value, Value) {
+		err := createException(m, "Fail us!")
+		return nil, err
+	}
+
+	mrb := NewMrb()
+
+	testClass = mrb.DefineClass("TestClass", nil)
+	testClass.DefineMethod("dotest!", doTestFunc, ArgsReq(0)|ArgsOpt(3))
+
+	mrb.TopSelf().SingletonClass().DefineMethod("test", testFunc, ArgsReq(0)|ArgsOpt(3))
+
+	_, err := mrb.LoadString("test")
+	if err == nil {
+		t.Fatal("No exception when one was expected")
+		return
+	}
+
+	mrb.Close()
+	mrb = NewMrb()
+
+	evalFunc := func(m *Mrb, self *MrbValue) (Value, Value) {
+		arg := m.GetArgs()[0]
+		result, err := self.CallBlock("instance_eval", arg)
+		if err != nil {
+			return result, createException(m, err.Error())
+		}
+
+		return result, nil
+	}
+
+	mrb.TopSelf().SingletonClass().DefineMethod("myeval", evalFunc, ArgsBlock())
+
+	result, err := mrb.LoadString("myeval { raise 'foo' }")
+	if err == nil {
+		t.Fatal("did not error")
+		return
+	}
+
+	if result != nil {
+		t.Fatal("result was not cleared")
+		return
+	}
+
+	mrb.Close()
 }

@@ -63,11 +63,13 @@ func (v *MrbValue) call(method string, args []Value, block Value) (*MrbValue, er
 	var argv []C.mrb_value
 	var argvPtr *C.mrb_value
 
+	mrb := &Mrb{v.state}
+
 	if len(args) > 0 {
 		// Make the raw byte slice to hold our arguments we'll pass to C
 		argv = make([]C.mrb_value, len(args))
 		for i, arg := range args {
-			argv[i] = arg.MrbValue(&Mrb{v.state}).value
+			argv[i] = arg.MrbValue(mrb).value
 		}
 
 		argvPtr = &argv[0]
@@ -75,7 +77,7 @@ func (v *MrbValue) call(method string, args []Value, block Value) (*MrbValue, er
 
 	var blockV *C.mrb_value
 	if block != nil {
-		val := block.MrbValue(&Mrb{v.state}).value
+		val := block.MrbValue(mrb).value
 		blockV = &val
 	}
 
@@ -84,23 +86,13 @@ func (v *MrbValue) call(method string, args []Value, block Value) (*MrbValue, er
 
 	// If we have a block, we have to call a separate function to
 	// pass a block in. Otherwise, we just call it directly.
-	var result C.mrb_value
-	if blockV == nil {
-		result = C.mrb_funcall_argv(
-			v.state,
-			v.value,
-			C.mrb_intern_cstr(v.state, cs),
-			C.mrb_int(len(argv)),
-			argvPtr)
-	} else {
-		result = C.mrb_funcall_with_block(
-			v.state,
-			v.value,
-			C.mrb_intern_cstr(v.state, cs),
-			C.mrb_int(len(argv)),
-			argvPtr,
-			*blockV)
-	}
+	result := C._go_mrb_call(
+		v.state,
+		v.value,
+		C.mrb_intern_cstr(v.state, cs),
+		C.mrb_int(len(argv)),
+		argvPtr,
+		blockV)
 
 	if exc := checkException(v.state); exc != nil {
 		return nil, exc

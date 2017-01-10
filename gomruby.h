@@ -7,6 +7,7 @@
 #ifndef _GOMRUBY_H_INCLUDED
 #define _GOMRUBY_H_INCLUDED
 
+#include <errno.h>
 #include <mruby.h>
 #include <mruby/array.h>
 #include <mruby/class.h>
@@ -21,34 +22,24 @@
 #include <mruby/value.h>
 #include <mruby/variable.h>
 
+// (erikh) this can be set in mruby/mrbconfig.h so we can default it here.
+// XXX I don't know how this actually plays out when the config is modified.
+// I'm taking a WAG here. Either way, the default is 16 in vm.c.
+#ifndef MRB_FUNCALL_ARGC_MAX
+  #define MRB_FUNCALL_ARGC_MAX 16
+#endif // MRB_FUNCALL_ARGC_MAX
+
 //-------------------------------------------------------------------
 // Helpers to deal with calling back into Go.
 //-------------------------------------------------------------------
 // This is declard in func.go and is a way for us to call back into
 // Go to execute a method.
-extern mrb_value goMRBFuncCall(mrb_state*, mrb_value*, mrb_value*);
-
-// This calls into Go with a similar signature to mrb_func_t. We have to
-// change it slightly because cgo can't handle the union type of mrb_value,
-// so we pass in a pointer instead. Additionally, the result is also a
-// pointer to work around Go's confusion with unions.
-static inline mrb_value _goMRBFuncCall(mrb_state *s, mrb_value self) {
-    mrb_value exc = mrb_nil_value();
-    mrb_value result = goMRBFuncCall(s, &self, &exc);
-    // We raise if we got an exception. We have to raise from here and
-    // not from within Go because it messes with Go's calling conventions,
-    // resulting in a broken stack.
-    if (!mrb_nil_p(exc)) {
-        mrb_exc_raise(s, exc);
-    }
-
-    return result;
-}
+extern mrb_value goMRBFuncCall(mrb_state*, mrb_value);
 
 // This method is used as a way to get a valid mrb_func_t that actually
 // just calls back into Go.
 static inline mrb_func_t _go_mrb_func_t() {
-    return &_goMRBFuncCall;
+    return &goMRBFuncCall;
 }
 
 //-------------------------------------------------------------------
@@ -86,29 +77,44 @@ static mrb_value _go_mrb_yield_argv(mrb_state *mrb, mrb_value b, mrb_int argc, c
     GOMRUBY_EXC_PROTECT_END
 }
 
+static mrb_value _go_mrb_call(mrb_state *mrb, mrb_value b, mrb_sym method, mrb_int argc, const mrb_value *argv, mrb_value *block) {
+  GOMRUBY_EXC_PROTECT_START
+  if (block != NULL) {
+		result = mrb_funcall_with_block(mrb, b, method, argc, argv, *block);
+  } else {
+    result = mrb_funcall_argv(mrb, b, method, argc, argv);
+  }
+  GOMRUBY_EXC_PROTECT_END
+}
+
 //-------------------------------------------------------------------
 // Helpers to deal with getting arguments
 //-------------------------------------------------------------------
 // This is declard in args.go
-extern void goGetArgAppend(mrb_value*);
+extern void goGetArgAppend(mrb_value);
 
 // This gets all arguments given to a function call and adds them to
 // the accumulator in Go.
 static inline int _go_mrb_get_args_all(mrb_state *s) {
     mrb_value *argv;
     mrb_value block;
-    int argc, i, count;
+    mrb_bool append;
+    int argc, i;
 
-    count = mrb_get_args(s, "*&", &argv, &argc, &block);
+    mrb_get_args(s, "*&?", &argv, &argc, &block, &append);
+
     for (i = 0; i < argc; i++) {
-        goGetArgAppend(&argv[i]);
+        goGetArgAppend(argv[i]);
     }
 
-    if (!mrb_nil_p(block)) {
-        goGetArgAppend(&block);
+    if (append == FALSE || mrb_type(block) == MRB_TT_FALSE) {
+        return argc;
     }
 
-    return count;
+    argc++;
+    goGetArgAppend(block);
+
+    return argc;
 }
 
 //-------------------------------------------------------------------
@@ -198,6 +204,10 @@ static inline void _go_enable_gc(mrb_state *m) {
   _go_set_gc(m, 0);
 }
 
+static inline int _go_get_max_funcall_args() {
+  return MRB_FUNCALL_ARGC_MAX;
+}
+
 // this function returns 1 if the value is dead, aka reaped or otherwise
 // terminated by the GC.
 static inline int _go_isdead(mrb_state *m, mrb_value o) {
@@ -235,6 +245,10 @@ static inline mrb_value _go_mrb_context_run(mrb_state *m, struct RProc *proc, mr
   mrb_value result = mrb_context_run(m, proc, self, *stack_keep);
   *stack_keep = proc->body.irep->nlocals;
   return result;
+}
+
+static inline struct RObject* _go_mrb_getobj(mrb_value v) {
+  return mrb_obj_ptr(v);
 }
 
 #endif
