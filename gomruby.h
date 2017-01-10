@@ -1,3 +1,4 @@
+// vim: ft=c ts=2 sts=2 st=2
 /*
  * This header exists to simplify the headers that are included within
  * the Go files. This header should include all the necessary headers
@@ -50,37 +51,37 @@ static inline mrb_func_t _go_mrb_func_t() {
 // If we let exceptions through then the longjmp will cause a Go stack
 // split.
 #define GOMRUBY_EXC_PROTECT_START \
-    struct mrb_jmpbuf *prev_jmp = mrb->jmp; \
-    struct mrb_jmpbuf c_jmp; \
-    mrb_value result = mrb_nil_value(); \
-    MRB_TRY(&c_jmp) { \
-        mrb->jmp = &c_jmp;
+  struct mrb_jmpbuf *prev_jmp = mrb->jmp; \
+  struct mrb_jmpbuf c_jmp; \
+  mrb_value result = mrb_nil_value(); \
+  MRB_TRY(&c_jmp) { \
+    mrb->jmp = &c_jmp;
 
 #define GOMRUBY_EXC_PROTECT_END \
-        mrb->jmp = prev_jmp; \
-    } MRB_CATCH(&c_jmp) { \
-        mrb->jmp = prev_jmp; \
-        result = mrb_nil_value();\
-    } MRB_END_EXC(&c_jmp); \
-    mrb_gc_protect(mrb, result); \
-    return result;
+    mrb->jmp = prev_jmp; \
+  } MRB_CATCH(&c_jmp) { \
+    mrb->jmp = prev_jmp; \
+    result = mrb_nil_value();\
+  } MRB_END_EXC(&c_jmp); \
+  mrb_gc_protect(mrb, result); \
+  return result;
 
 static mrb_value _go_mrb_load_string(mrb_state *mrb, const char *s) {
-    GOMRUBY_EXC_PROTECT_START
-    result = mrb_load_string(mrb, s);
-    GOMRUBY_EXC_PROTECT_END
+  GOMRUBY_EXC_PROTECT_START
+  result = mrb_load_string(mrb, s);
+  GOMRUBY_EXC_PROTECT_END
 }
 
 static mrb_value _go_mrb_yield_argv(mrb_state *mrb, mrb_value b, mrb_int argc, const mrb_value *argv) {
-    GOMRUBY_EXC_PROTECT_START
-    result = mrb_yield_argv(mrb, b, argc, argv);
-    GOMRUBY_EXC_PROTECT_END
+  GOMRUBY_EXC_PROTECT_START
+  result = mrb_yield_argv(mrb, b, argc, argv);
+  GOMRUBY_EXC_PROTECT_END
 }
 
 static mrb_value _go_mrb_call(mrb_state *mrb, mrb_value b, mrb_sym method, mrb_int argc, const mrb_value *argv, mrb_value *block) {
   GOMRUBY_EXC_PROTECT_START
   if (block != NULL) {
-		result = mrb_funcall_with_block(mrb, b, method, argc, argv, *block);
+    result = mrb_funcall_with_block(mrb, b, method, argc, argv, *block);
   } else {
     result = mrb_funcall_argv(mrb, b, method, argc, argv);
   }
@@ -96,25 +97,25 @@ extern void goGetArgAppend(mrb_value);
 // This gets all arguments given to a function call and adds them to
 // the accumulator in Go.
 static inline int _go_mrb_get_args_all(mrb_state *s) {
-    mrb_value *argv;
-    mrb_value block;
-    mrb_bool append;
-    int argc, i;
+  mrb_value *argv;
+  mrb_value block;
+  mrb_bool append;
+  int argc, i;
 
-    mrb_get_args(s, "*&?", &argv, &argc, &block, &append);
+  mrb_get_args(s, "*&?", &argv, &argc, &block, &append);
 
-    for (i = 0; i < argc; i++) {
-        goGetArgAppend(argv[i]);
-    }
+  for (i = 0; i < argc; i++) {
+    goGetArgAppend(argv[i]);
+  }
 
-    if (append == FALSE || mrb_type(block) == MRB_TT_FALSE) {
-        return argc;
-    }
-
-    argc++;
-    goGetArgAppend(block);
-
+  if (append == FALSE || mrb_type(block) == MRB_TT_FALSE) {
     return argc;
+  }
+
+  argc++;
+  goGetArgAppend(block);
+
+  return argc;
 }
 
 //-------------------------------------------------------------------
@@ -124,14 +125,14 @@ static inline int _go_mrb_get_args_all(mrb_state *s) {
 // This is used to help calculate the "send" value for the parser,
 // since pointer arithmetic like this is hard in Go.
 static inline const char *_go_mrb_calc_send(const char *s) {
-    return s + strlen(s);
+  return s + strlen(s);
 }
 
 // Sets the capture_errors field on mrb_parser_state. Go can't access bit
 // fields.
 static inline void
 _go_mrb_parser_set_capture_errors(struct mrb_parser_state *p, mrb_bool v) {
-    p->capture_errors = v;
+  p->capture_errors = v;
 }
 
 //-------------------------------------------------------------------
@@ -140,51 +141,51 @@ _go_mrb_parser_set_capture_errors(struct mrb_parser_state *p, mrb_bool v) {
 //-------------------------------------------------------------------
 
 static inline mrb_aspec _go_MRB_ARGS_ANY() {
-    return MRB_ARGS_ANY();
+  return MRB_ARGS_ANY();
 }
 
 static inline mrb_aspec _go_MRB_ARGS_ARG(int r, int o) {
-    return MRB_ARGS_ARG(r, o);
+  return MRB_ARGS_ARG(r, o);
 }
 
 static inline mrb_aspec _go_MRB_ARGS_BLOCK() {
-    return MRB_ARGS_BLOCK();
+  return MRB_ARGS_BLOCK();
 }
 
 static inline mrb_aspec _go_MRB_ARGS_NONE() {
-    return MRB_ARGS_NONE();
+  return MRB_ARGS_NONE();
 }
 
 static inline mrb_aspec _go_MRB_ARGS_OPT(int n) {
-    return MRB_ARGS_OPT(n);
+  return MRB_ARGS_OPT(n);
 }
 
 static inline mrb_aspec _go_MRB_ARGS_REQ(int n) {
-    return MRB_ARGS_REQ(n);
+  return MRB_ARGS_REQ(n);
 }
 
 static inline float _go_mrb_float(mrb_value o) {
-    return mrb_float(o);
+  return mrb_float(o);
 }
 
 static inline int _go_mrb_fixnum(mrb_value o) {
-    return mrb_fixnum(o);
+  return mrb_fixnum(o);
 }
 
 static inline struct RBasic *_go_mrb_basic_ptr(mrb_value o) {
-    return mrb_basic_ptr(o);
+  return mrb_basic_ptr(o);
 }
 
 static inline struct RProc *_go_mrb_proc_ptr(mrb_value o) {
-    return mrb_proc_ptr(o);
+  return mrb_proc_ptr(o);
 }
 
 static inline enum mrb_vtype _go_mrb_type(mrb_value o) {
-    return mrb_type(o);
+  return mrb_type(o);
 }
 
 static inline mrb_bool _go_mrb_nil_p(mrb_value o) {
-    return mrb_nil_p(o);
+  return mrb_nil_p(o);
 }
 
 static inline struct RClass *_go_mrb_class_ptr(mrb_value o) {
