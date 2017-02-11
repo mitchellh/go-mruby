@@ -24,7 +24,14 @@ don't ship a pre-built version of mruby because the build step of mruby
 is important in customizing what aspects of the standard library you want
 available, as well as any other extensions.
 
-To build mruby, we've made it very easy:
+To build mruby, we've made it very easy. You will need the following packages
+available on your host operating system:
+
+* bison
+* flex
+* ruby 2.x
+
+Then just type:
 
 ```
 $ make
