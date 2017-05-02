@@ -73,8 +73,9 @@ For usage examples and documentation, please see the
 [go-mruby GoDoc](http://godoc.org/github.com/mitchellh/go-mruby), which
 we keep up to date and full of examples.
 
-For a quick taste of what using go-mruby looks like, though, we provide
-an example below:
+Include the generated `libmruby.a` from the above installation in the working
+directory and import go-mruby. For a quick taste of what using go-mruby looks
+like, though, we provide an example below:
 
 ```go
 package main
@@ -82,6 +83,7 @@ package main
 import (
 	"fmt"
 	"github.com/mitchellh/go-mruby"
+	"fmt"
 )
 
 func main() {
