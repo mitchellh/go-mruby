@@ -110,3 +110,4 @@ func main() {
 	fmt.Printf("Result: %s\n", result.String())
 }
 ```
+You have to copy `libmruby.a` from go-mruby source directory to your source directory before `go build` or `go run`. 
