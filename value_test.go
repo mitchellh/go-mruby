@@ -242,7 +242,7 @@ func TestMrbValueType(t *testing.T) {
 			t.Fatalf("loadstring failed for case %#v: %s", c, err)
 		}
 		if cType := r.Type(); cType != c.Expected {
-			t.Fatalf("bad type: got %s, expected %s", cType, c.Expected)
+			t.Fatalf("bad type: got %v, expected %v", cType, c.Expected)
 		}
 	}
 }
