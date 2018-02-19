@@ -30,7 +30,7 @@ func TestHash(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 	if valType := value.Type(); valType != TypeFalse {
-		t.Fatalf("bad type: %s", valType)
+		t.Fatalf("bad type: %v", valType)
 	}
 	if value.String() != "false" {
 		t.Fatalf("bad: %s", value)
@@ -55,7 +55,7 @@ func TestHash(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 	if value.Type() != TypeArray {
-		t.Fatalf("bad: %s", value.Type())
+		t.Fatalf("bad: %v", value.Type())
 	}
 	if value.String() != `["foo", "baz"]` {
 		t.Fatalf("bad: %s", value)

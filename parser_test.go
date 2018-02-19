@@ -16,7 +16,7 @@ func TestParserGenerateCode(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 	if warns != nil {
-		t.Fatalf("warnings: %s", warns)
+		t.Fatalf("warnings: %v", warns)
 	}
 
 	proc := p.GenerateCode()
@@ -41,7 +41,7 @@ func TestParserParse(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 	if warns != nil {
-		t.Fatalf("warnings: %s", warns)
+		t.Fatalf("warnings: %v", warns)
 	}
 }
 
