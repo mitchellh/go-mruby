@@ -4,6 +4,7 @@ import "unsafe"
 
 // #cgo CFLAGS: -Ivendor/mruby/include
 // #cgo LDFLAGS: ${SRCDIR}/libmruby.a -lm
+// #include <stdio.h>
 // #include <stdlib.h>
 // #include "gomruby.h"
 import "C"
@@ -180,6 +181,26 @@ func (m *Mrb) LoadString(code string) (*MrbValue, error) {
 	defer C.free(unsafe.Pointer(cs))
 
 	value := C._go_mrb_load_string(m.state, cs)
+	if exc := checkException(m.state); exc != nil {
+		return nil, exc
+	}
+
+	return newValue(m.state, value), nil
+}
+
+// LoadIrepFile loads the given compiled file (.mrb) path, executes it, and returns its final
+// value that it might return.
+func (m *Mrb) LoadIrepFile(path string) (*MrbValue, error) {
+	c1 := C.CString(path)
+	defer C.free(unsafe.Pointer(c1))
+
+	c2 := C.CString("r")
+	defer C.free(unsafe.Pointer(c2))
+
+	fp := C.fopen(c1, c2)
+	defer C.fclose(fp)
+
+	value := C._go_mrb_load_irep_file(m.state, fp)
 	if exc := checkException(m.state); exc != nil {
 		return nil, exc
 	}

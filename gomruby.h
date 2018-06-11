@@ -13,6 +13,7 @@
 #include <mruby/array.h>
 #include <mruby/class.h>
 #include <mruby/compile.h>
+#include <mruby/dump.h>
 #include <mruby/error.h>
 #include <mruby/irep.h>
 #include <mruby/gc.h>
@@ -69,6 +70,12 @@ static inline mrb_func_t _go_mrb_func_t() {
 static mrb_value _go_mrb_load_string(mrb_state *mrb, const char *s) {
   GOMRUBY_EXC_PROTECT_START
   result = mrb_load_string(mrb, s);
+  GOMRUBY_EXC_PROTECT_END
+}
+
+static mrb_value _go_mrb_load_irep_file(mrb_state *mrb, FILE *fp) {
+  GOMRUBY_EXC_PROTECT_START
+  result = mrb_load_irep_file(mrb, fp);
   GOMRUBY_EXC_PROTECT_END
 }
 
