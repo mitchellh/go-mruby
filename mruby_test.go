@@ -33,8 +33,7 @@ func TestMrbClass(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
 
-	var class *Class
-	class = mrb.Class("Object", nil)
+	class := mrb.Class("Object", nil)
 	if class == nil {
 		t.Fatal("class should not be nil")
 	}
@@ -271,7 +270,7 @@ func TestMrbGetArgs(t *testing.T) {
 				for i, v := range actual {
 					str, err := v.Call("inspect")
 					if err != nil {
-						t.Fatalf("err: %s", err)
+						errChan <- err
 					}
 
 					actualStrings[i] = str.String()
@@ -471,7 +470,7 @@ func TestMrbRun(t *testing.T) {
 	parser.Parse(`a = 10`, context)
 	proc = parser.GenerateCode()
 
-	stackKeep, ret, err := mrb.RunWithContext(proc, nil, 0)
+	stackKeep, _, err := mrb.RunWithContext(proc, nil, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -483,7 +482,8 @@ func TestMrbRun(t *testing.T) {
 	parser.Parse(`a`, context)
 	proc = parser.GenerateCode()
 
-	stackKeep, ret, err = mrb.RunWithContext(proc, nil, stackKeep)
+	var ret *MrbValue
+	_, ret, err = mrb.RunWithContext(proc, nil, stackKeep)
 	if err != nil {
 		t.Fatal(err)
 	}
