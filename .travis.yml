@@ -4,4 +4,4 @@ go:
   - "1.11"
   - "1.10"
 install: sudo apt-get install build-essential g++ bison flex
-script: make
+script: make all megacheck
