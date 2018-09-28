@@ -328,7 +328,6 @@ func TestMrbGlobalVariable(t *testing.T) {
 
 func TestMrbInstanceVariable(t *testing.T) {
 	const (
-		CockerSpaniel   = "cocker spaniel"
 		GoldenRetriever = "golden retriever"
 		Husky           = "Husky"
 	)
