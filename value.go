@@ -41,6 +41,42 @@ func init() {
 	Nil = [0]byte{}
 }
 
+// CallInstanceMethod calls a method on the instance without a block
+func (v *MrbValue) CallInstanceMethod(method string, value []*MrbValue) *MrbValue {
+	cs := C.CString(method)
+	defer C.free(unsafe.Pointer(cs))
+	vals := make([]C.mrb_value, len(value))
+	for k, vv := range value {
+		vals[k] = vv.value
+	}
+	return newValue(v.state, C.mrb_funcall_argv(v.state, v.value, C.mrb_intern_cstr(v.state, cs), C.mrb_int(len(value)), &vals[0]))
+}
+
+// CallInstanceMethodBlock calls a method on the instance with a block
+func (v *MrbValue) CallInstanceMethodBlock(method string, value []*MrbValue, block *MrbValue) *MrbValue {
+	cs := C.CString(method)
+	defer C.free(unsafe.Pointer(cs))
+	vals := make([]C.mrb_value, len(value))
+	for k, vv := range value {
+		vals[k] = vv.value
+	}
+	return newValue(v.state, C.mrb_funcall_with_block(v.state, v.value, C.mrb_intern_cstr(v.state, cs), C.mrb_int(len(value)), &vals[0], block.value))
+}
+
+// SetInstanceVariable sets an instance variable on this value.
+func (v *MrbValue) SetInstanceVariable(variable string, value *MrbValue) {
+	cs := C.CString(variable)
+	defer C.free(unsafe.Pointer(cs))
+	C._go_mrb_iv_set(v.state, v.value, C.mrb_intern_cstr(v.state, cs), value.value)
+}
+
+// GetInstanceVariable gets an instance variable on this value.
+func (v *MrbValue) GetInstanceVariable(variable string) *MrbValue {
+	cs := C.CString(variable)
+	defer C.free(unsafe.Pointer(cs))
+	return newValue(v.state, C._go_mrb_iv_get(v.state, v.value, C.mrb_intern_cstr(v.state, cs)))
+}
+
 // Call calls a method with the given name and arguments on this
 // value.
 func (v *MrbValue) Call(method string, args ...Value) (*MrbValue, error) {
