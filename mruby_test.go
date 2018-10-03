@@ -303,6 +303,70 @@ func TestMrbGetArgs(t *testing.T) {
 	}
 }
 
+func TestMrbGlobalVariable(t *testing.T) {
+	const (
+		TestValue = "HELLO"
+	)
+	mrb := NewMrb()
+	defer mrb.Close()
+	if _, err := mrb.LoadString(fmt.Sprintf(`$a = "%s"`, TestValue)); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	value := mrb.GetGlobalVariable("$a")
+	if value.String() != TestValue {
+		t.Fatalf("wrong value for $a: expected '%s', found '%s'", TestValue, value.String())
+	}
+	mrb.SetGlobalVariable("$b", mrb.StringValue(TestValue))
+	value, err := mrb.LoadString(`$b`)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if value.String() != TestValue {
+		t.Fatalf("wrong value for $b: expected '%s', found '%s'", TestValue, value.String())
+	}
+}
+
+func TestMrbInstanceVariable(t *testing.T) {
+	const (
+		GoldenRetriever = "golden retriever"
+		Husky           = "Husky"
+	)
+	mrb := NewMrb()
+	defer mrb.Close()
+	_, err := mrb.LoadString(`
+		class Dog
+			def initialize(breed)
+				@breed = breed
+			end
+			def breed
+				"cocker spaniel" # this line exists to ensure that it's not invoking the accessor method
+			end
+			def real_breed
+				@breed
+			end
+		end
+	`)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	dogClass := mrb.Class("Dog", nil)
+	if dogClass == nil {
+		t.Fatalf("dog class not found")
+	}
+	inst, err := dogClass.New(mrb.StringValue(GoldenRetriever))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	value := inst.GetInstanceVariable("@breed")
+	if value.String() != GoldenRetriever {
+		t.Fatalf("wrong value for Dog.@breed. expected: '%s', found: '%s'", GoldenRetriever, value.String())
+	}
+	inst.SetInstanceVariable("@breed", mrb.StringValue(Husky))
+	value = inst.GetInstanceVariable("@breed")
+	if value.String() != Husky {
+		t.Fatalf("wrong value for Dog.@breed. expected: '%s', found: '%s'", Husky, value.String())
+	}
+}
 func TestMrbLoadString(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
