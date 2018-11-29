@@ -1,4 +1,5 @@
 # mruby Library for Go [![Build Status](https://travis-ci.org/mitchellh/go-mruby.svg?branch=master)](https://travis-ci.org/mitchellh/go-mruby)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmitchellh%2Fgo-mruby.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmitchellh%2Fgo-mruby?ref=badge_shield)
 
 go-mruby provides [mruby](https://github.com/mruby/mruby) bindings for
 [Go](http://golang.org). This allows Go applications to run a lightweight
@@ -110,3 +111,7 @@ func main() {
 	fmt.Printf("Result: %s\n", result.String())
 }
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmitchellh%2Fgo-mruby.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmitchellh%2Fgo-mruby?ref=badge_large)
