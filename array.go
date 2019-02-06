@@ -1,6 +1,7 @@
 package mruby
 
 // #include "gomruby.h"
+// mrb_int _mrb_ary_len(mrb_value ary) { return RARRAY_LEN(ary); }
 import "C"
 
 // Array represents an MrbValue that is a Array in Ruby.
@@ -12,7 +13,7 @@ type Array struct {
 
 // Len returns the length of the array.
 func (v *Array) Len() int {
-	return int(C.mrb_ary_len(v.state, v.value))
+	return int(C._mrb_ary_len(v.value))
 }
 
 // Get gets an element form the Array by index.
