@@ -139,7 +139,7 @@ func (v *MrbValue) GCProtect() {
 // when this value is a proc.
 func (v *MrbValue) SetProcTargetClass(c *Class) {
 	proc := C._go_mrb_proc_ptr(v.value)
-	proc.target_class = c.class
+	proc.e = *(*[8]byte)(unsafe.Pointer(&c.class))
 }
 
 // Type returns the ValueType of the MrbValue. See the constants table.

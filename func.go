@@ -63,7 +63,7 @@ func goMRBFuncCall(s *C.mrb_state, v C.mrb_value) C.mrb_value {
 
 	// Lookup the class itself
 	classTable.Mutex.Lock()
-	methodTable := classTable.Map[ci.proc.target_class]
+	methodTable := classTable.Map[ci.target_class]
 	classTable.Mutex.Unlock()
 	if methodTable == nil {
 		panic(fmt.Sprintf("func call on unknown class"))
