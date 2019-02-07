@@ -1,7 +1,6 @@
 package mruby
 
 // #include "gomruby.h"
-// mrb_int _mrb_ary_len(mrb_value ary) { return RARRAY_LEN(ary); }
 import "C"
 
 // Array represents an MrbValue that is a Array in Ruby.

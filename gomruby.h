@@ -268,4 +268,8 @@ static inline mrb_value _go_mrb_gv_get(mrb_state *m, mrb_sym sym) {
   return mrb_gv_get(m, sym);
 }
 
+static inline mrb_int _mrb_ary_len(mrb_value ary) {
+  return RARRAY_LEN(ary);
+}
+
 #endif
