@@ -46,46 +46,66 @@ static inline mrb_func_t _go_mrb_func_t() {
 //-------------------------------------------------------------------
 // Helpers to deal with calling into Ruby (C)
 //-------------------------------------------------------------------
-// These are some really horrible C macros that are used to wrap
-// various mruby C API function calls so that we catch the exceptions.
-// If we let exceptions through then the longjmp will cause a Go stack
-// split.
-#define GOMRUBY_EXC_PROTECT_START \
-  struct mrb_jmpbuf *prev_jmp = mrb->jmp; \
-  struct mrb_jmpbuf c_jmp; \
-  mrb_value result = mrb_nil_value(); \
-  MRB_TRY(&c_jmp) { \
-    mrb->jmp = &c_jmp;
 
-#define GOMRUBY_EXC_PROTECT_END \
-    mrb->jmp = prev_jmp; \
-  } MRB_CATCH(&c_jmp) { \
-    mrb->jmp = prev_jmp; \
-    result = mrb_nil_value();\
-  } MRB_END_EXC(&c_jmp); \
-  mrb_gc_protect(mrb, result); \
-  return result;
+static mrb_value load_string_cb(mrb_state *mrb, mrb_value in) {
+  return mrb_load_string(mrb, (const char*)mrb_cptr(in));
+}
 
 static mrb_value _go_mrb_load_string(mrb_state *mrb, const char *s) {
-  GOMRUBY_EXC_PROTECT_START
-  result = mrb_load_string(mrb, s);
-  GOMRUBY_EXC_PROTECT_END
+  mrb_bool state;
+  mrb_value result = mrb_protect(mrb, load_string_cb, mrb_cptr_value(mrb, (void*)s), &state);
+  if (state) {
+    mrb->exc = mrb_obj_ptr(result);
+  }
+  return result;
+}
+
+struct yield_data {
+  mrb_value block;
+  mrb_int argc;
+  const mrb_value *argv;
+};
+
+static mrb_value yield_argv_cb(mrb_state *mrb, mrb_value in) {
+  struct yield_data *d = (struct yield_data*)mrb_cptr(in);
+  return mrb_yield_argv(mrb, d->block, d->argc, d->argv);
 }
 
 static mrb_value _go_mrb_yield_argv(mrb_state *mrb, mrb_value b, mrb_int argc, const mrb_value *argv) {
-  GOMRUBY_EXC_PROTECT_START
-  result = mrb_yield_argv(mrb, b, argc, argv);
-  GOMRUBY_EXC_PROTECT_END
+  struct yield_data d = { b, argc, argv };
+  mrb_bool state;
+  mrb_value result = mrb_protect(mrb, yield_argv_cb, mrb_cptr_value(mrb, &d), &state);
+  if (state) {
+    mrb->exc = mrb_obj_ptr(result);
+  }
+  return result;
 }
 
-static mrb_value _go_mrb_call(mrb_state *mrb, mrb_value b, mrb_sym method, mrb_int argc, const mrb_value *argv, mrb_value *block) {
-  GOMRUBY_EXC_PROTECT_START
-  if (block != NULL) {
-    result = mrb_funcall_with_block(mrb, b, method, argc, argv, *block);
+struct call_data {
+  mrb_value self;
+  mrb_sym method;
+  mrb_int argc;
+  const mrb_value *argv;
+  const mrb_value *block;
+};
+
+static mrb_value mrb_call_cb(mrb_state *mrb, mrb_value in) {
+  struct call_data *d = (struct call_data*)mrb_cptr(in);
+  if (d->block != NULL) {
+    return mrb_funcall_with_block(mrb, d->self, d->method, d->argc, d->argv, *d->block);
   } else {
-    result = mrb_funcall_argv(mrb, b, method, argc, argv);
+    return mrb_funcall_argv(mrb, d->self, d->method, d->argc, d->argv);
   }
-  GOMRUBY_EXC_PROTECT_END
+}
+
+static mrb_value _go_mrb_call(mrb_state *mrb, mrb_value self, mrb_sym method, mrb_int argc, const mrb_value *argv, const mrb_value *block) {
+  struct call_data d = { self, method, argc, argv, block };
+  mrb_bool state;
+  mrb_value result = mrb_protect(mrb, mrb_call_cb, mrb_cptr_value(mrb, &d), &state);
+  if (state) {
+    mrb->exc = mrb_obj_ptr(result);
+  }
+  return result;
 }
 
 //-------------------------------------------------------------------
@@ -100,7 +120,7 @@ static inline int _go_mrb_get_args_all(mrb_state *s) {
   mrb_value *argv;
   mrb_value block;
   mrb_bool append;
-  int argc, i;
+  mrb_int argc, i;
 
   mrb_get_args(s, "*&?", &argv, &argc, &block, &append);
 
