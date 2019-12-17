@@ -4,6 +4,5 @@ go:
   - "1.13"
   - "1.12"
   - "1.11"
-  - "1.10"
 install: sudo apt-get install build-essential g++ bison flex
 script: make all megacheck
