@@ -139,7 +139,7 @@ func (v *MrbValue) GCProtect() {
 // when this value is a proc.
 func (v *MrbValue) SetProcTargetClass(c *Class) {
 	proc := C._go_mrb_proc_ptr(v.value)
-	proc.target_class = c.class
+	proc.e = *(*[8]byte)(unsafe.Pointer(&c.class))
 }
 
 // Type returns the ValueType of the MrbValue. See the constants table.
@@ -260,10 +260,13 @@ func newExceptionValue(s *C.mrb_state) *Exception {
 
 	// Retrieve and convert backtrace to []string (avoiding reflection in Decode)
 	var backtrace []string
-	mrbBacktrace := newValue(s, C.mrb_exc_backtrace(s, value)).Array()
-	for i := 0; i < mrbBacktrace.Len(); i++ {
-		ln, _ := mrbBacktrace.Get(i)
-		backtrace = append(backtrace, ln.String())
+	stk := newValue(s, C.mrb_exc_backtrace(s, value))
+	if stk.Type() != TypeNil {
+		mrbBacktrace := stk.Array()
+		for i := 0; i < mrbBacktrace.Len(); i++ {
+			ln, _ := mrbBacktrace.Get(i)
+			backtrace = append(backtrace, ln.String())
+		}
 	}
 
 	// Extract file + line from first backtrace line

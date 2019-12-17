@@ -1,6 +1,6 @@
-MRUBY_COMMIT ?= 1.2.0
+MRUBY_COMMIT ?= 2.1.0
 
-all: libmruby.a test
+all: test
 
 clean:
 	rm -rf vendor
@@ -14,11 +14,11 @@ lint:
 	sh golint.sh
 
 megacheck:
-	go get honnef.co/go/tools/cmd/megacheck
-	GO111MODULE=off megacheck ./...
+	go get honnef.co/go/tools/cmd/staticcheck
+	GO111MODULE=off staticcheck ./...
 
 libmruby.a: vendor/mruby
-	cd vendor/mruby && ${MAKE}
+	cd vendor/mruby && MRUBY_CONFIG=../../build_config.rb ${MAKE}
 	cp vendor/mruby/build/host/lib/libmruby.a .
 
 vendor/mruby:
@@ -27,7 +27,7 @@ vendor/mruby:
 	cd vendor/mruby && git reset --hard && git clean -fdx
 	cd vendor/mruby && git checkout ${MRUBY_COMMIT}
 
-test: gofmt lint
+test: libmruby.a gofmt lint
 	go test -v
 
 .PHONY: all clean libmruby.a test lint

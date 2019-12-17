@@ -11,7 +11,7 @@ type CompileContext struct {
 	ctx           *C.mrbc_context
 	filename      string
 	mrb           *Mrb
-	captureErrors bool
+	// captureErrors bool
 }
 
 // NewCompileContext constructs a *CompileContext from a *Mrb.

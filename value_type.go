@@ -7,20 +7,20 @@ type ValueType uint32
 const (
 	// TypeFalse is `false`
 	TypeFalse ValueType = iota
-	// TypeFree is ?
-	TypeFree
 	// TypeTrue is `true`
 	TypeTrue
+	// TypeFloat is any floating point number such as 1.2, etc.
+	TypeFloat
 	// TypeFixnum is fixnums, or integers for this case.
 	TypeFixnum
 	// TypeSymbol is for entities in ruby that look like `:this`
 	TypeSymbol
 	// TypeUndef is a value internal to ruby for uninstantiated vars.
 	TypeUndef
-	// TypeFloat is any floating point number such as 1.2, etc.
-	TypeFloat
 	// TypeCptr is a void*
 	TypeCptr
+	// TypeFree is ?
+	TypeFree
 	// TypeObject is a standard ruby object, base class of most instantiated objects.
 	TypeObject
 	// TypeClass is the base class of all classes.
@@ -51,6 +51,10 @@ const (
 	TypeData
 	// TypeFiber is for members of the Fiber class
 	TypeFiber
+	// TypeIStruct is ?
+	TypeIStruct
+	// TypeBreak is ?
+	TypeBreak
 	// TypeMaxDefine is ?
 	TypeMaxDefine
 	// TypeNil is nil
