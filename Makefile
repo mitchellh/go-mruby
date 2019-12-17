@@ -14,8 +14,8 @@ lint:
 	sh golint.sh
 
 megacheck:
-	go get honnef.co/go/tools/cmd/megacheck
-	GO111MODULE=off megacheck ./...
+	go get honnef.co/go/tools/cmd/staticcheck
+	GO111MODULE=off staticcheck ./...
 
 libmruby.a: vendor/mruby
 	cd vendor/mruby && MRUBY_CONFIG=../../build_config.rb ${MAKE}
