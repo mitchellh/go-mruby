@@ -8,8 +8,10 @@ MRuby::Build.new do |conf|
     toolchain :gcc
   end
 
-  # Turn on `enable_debug` for better debugging
-  enable_debug
+  if ENV['CI']
+    # Turn on `enable_debug` for better debugging
+    enable_debug
+  end
 
   gem core: 'mruby-error'
 end
