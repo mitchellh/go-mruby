@@ -12,11 +12,12 @@ gofmt:
 	gofmt -s *.go >/dev/null
 
 lint:
-	sh golint.sh
+	GO111MODULE=off go get golang.org/x/lint/golint
+	golint ./...
 
-megacheck:
-	go get honnef.co/go/tools/cmd/megacheck
-	GO111MODULE=off megacheck ./...
+staticcheck:
+	GO111MODULE=off go get honnef.co/go/tools/cmd/staticcheck
+	staticcheck ./...
 
 libmruby.a: ${MRUBY_VENDOR_DIR}/mruby
 	cd ${MRUBY_VENDOR_DIR}/mruby && ${MAKE}
@@ -28,7 +29,7 @@ ${MRUBY_VENDOR_DIR}/mruby:
 	cd ${MRUBY_VENDOR_DIR}/mruby && git reset --hard && git clean -fdx
 	cd ${MRUBY_VENDOR_DIR}/mruby && git checkout ${MRUBY_COMMIT}
 
-test: gofmt lint
+test: libmruby.a gofmt lint
 	go test -v
 
-.PHONY: all clean libmruby.a test lint
+.PHONY: all clean libmruby.a test lint staticcheck
