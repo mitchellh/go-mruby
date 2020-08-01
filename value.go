@@ -26,6 +26,9 @@ type NilType [0]byte
 // String is objects of the type String.
 type String string
 
+// Symbol is objects of the type Symbol.
+type Symbol string
+
 // Nil is a constant that can be used as a Nil Value
 var Nil NilType
 
@@ -241,6 +244,11 @@ func (NilType) MrbValue(m *Mrb) *MrbValue {
 // MrbValue returns the native MRB value
 func (s String) MrbValue(m *Mrb) *MrbValue {
 	return m.StringValue(string(s))
+}
+
+// MrbValue returns the native MRB value
+func (s Symbol) MrbValue(m *Mrb) *MrbValue {
+	return m.SymbolValue(string(s))
 }
 
 //-------------------------------------------------------------------
