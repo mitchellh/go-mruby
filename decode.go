@@ -116,6 +116,8 @@ func (d *decoder) decodeBool(name string, v *MrbValue, result reflect.Value) err
 		result.Set(reflect.ValueOf(false))
 	case TypeTrue:
 		result.Set(reflect.ValueOf(true))
+	case TypeNil:
+		// Do nothing, but also don't return an error
 	default:
 		return fmt.Errorf("%s: unknown type %v", name, t)
 	}
@@ -127,6 +129,8 @@ func (d *decoder) decodeFloat(name string, v *MrbValue, result reflect.Value) er
 	switch t := v.Type(); t {
 	case TypeFloat:
 		result.Set(reflect.ValueOf(v.Float()))
+	case TypeNil:
+		// Do nothing, but also don't return an error
 	default:
 		return fmt.Errorf("%s: unknown type %v", name, t)
 	}
@@ -316,8 +320,12 @@ func (d *decoder) decodeSlice(name string, v *MrbValue, result reflect.Value) er
 
 	// Get the hash of the value
 	array := v.Array()
+	len := 0
+	if array.Type() != TypeNil {
+		len = array.Len()
+	}
 
-	for i := 0; i < array.Len(); i++ {
+	for i := 0; i < len; i++ {
 		// Get the key and value in Ruby. This should do no allocations.
 		rbVal, err := array.Get(i)
 		if err != nil {
