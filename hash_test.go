@@ -8,7 +8,7 @@ func TestHash(t *testing.T) {
 	mrb := NewMrb()
 	defer mrb.Close()
 
-	value, err := mrb.LoadString(`{"foo" => "bar", "baz" => false}`)
+	value, err := mrb.LoadString(`{"foo" => "bar", "baz" => false, :fizz => 1, buzz: 2.0}`)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -36,6 +36,30 @@ func TestHash(t *testing.T) {
 		t.Fatalf("bad: %s", value)
 	}
 
+	// Get fixnum type with symbol key
+	value, err = h.Get(Symbol("fizz"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if valType := value.Type(); valType != TypeFixnum {
+		t.Fatalf("bad type: %v", valType)
+	}
+	if value.Fixnum() != 1 {
+		t.Fatalf("bad: %s", value)
+	}
+
+	// Get float type with symbol key
+	value, err = h.Get(Symbol("buzz"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if valType := value.Type(); valType != TypeFloat {
+		t.Fatalf("bad type: %v", valType)
+	}
+	if value.Float() != 2.0 {
+		t.Fatalf("bad: %s", value)
+	}
+
 	// Set
 	err = h.Set(String("foo"), String("baz"))
 	if err != nil {
@@ -57,7 +81,7 @@ func TestHash(t *testing.T) {
 	if value.Type() != TypeArray {
 		t.Fatalf("bad: %v", value.Type())
 	}
-	if value.String() != `["foo", "baz"]` {
+	if value.String() != `["foo", "baz", :fizz, :buzz]` {
 		t.Fatalf("bad: %s", value)
 	}
 
@@ -74,7 +98,7 @@ func TestHash(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	if value.String() != `["baz"]` {
+	if value.String() != `["baz", :fizz, :buzz]` {
 		t.Fatalf("bad: %s", value)
 	}
 
