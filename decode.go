@@ -348,6 +348,8 @@ func (d *decoder) decodeString(name string, v *MrbValue, result reflect.Value) e
 			strconv.FormatInt(int64(v.Fixnum()), 10)).Convert(result.Type()))
 	case TypeString:
 		result.Set(reflect.ValueOf(v.String()).Convert(result.Type()))
+	case TypeNil:
+		// Do nothing, but also don't return an error
 	default:
 		return fmt.Errorf("%s: unknown type to string: %v", name, t)
 	}
