@@ -99,6 +99,11 @@ func TestDecode(t *testing.T) {
 
 		// Struct from Hash
 		{
+			`{}`,
+			&outStructString,
+			structString{},
+		},
+		{
 			`{"foo" => "bar"}`,
 			&outStructString,
 			structString{Foo: "bar"},
