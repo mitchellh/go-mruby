@@ -149,6 +149,8 @@ func (d *decoder) decodeInt(name string, v *MrbValue, result reflect.Value) erro
 		}
 
 		result.SetInt(int64(v))
+	case TypeNil:
+		// Do nothing, but also don't return an error
 	default:
 		return fmt.Errorf("%s: unknown type %v", name, t)
 	}
@@ -189,6 +191,8 @@ func (d *decoder) decodeInterface(name string, v *MrbValue, result reflect.Value
 		set = reflect.Indirect(reflect.New(reflect.TypeOf(result)))
 	case TypeString:
 		set = reflect.Indirect(reflect.New(reflect.TypeOf("")))
+	case TypeNil:
+		// Do nothing, but also don't return an error
 	default:
 		return fmt.Errorf(
 			"%s: cannot decode into interface: %v",
@@ -244,6 +248,12 @@ func (d *decoder) decodeMap(name string, v *MrbValue, result reflect.Value) erro
 
 	// Get the hash of the value
 	hash := v.Hash()
+	if hash.Type() == TypeNil {
+		// Set the empty map
+		set.Set(resultMap)
+		return nil
+	}
+
 	keysRaw, err := hash.Keys()
 	if err != nil {
 		return err
